@@ -121,6 +121,10 @@ class Query implements PromiseLike<Result> {
     this.filters.push((r) => values.includes(pick(r, col)))
     return this
   }
+  gte(col: string, value: string | number) {
+    this.filters.push((r) => (pick(r, col) as string | number) >= value)
+    return this
+  }
   is(col: string, value: unknown) {
     this.filters.push((r) => (pick(r, col) ?? null) === value)
     return this

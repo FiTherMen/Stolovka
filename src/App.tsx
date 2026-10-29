@@ -16,7 +16,8 @@ import Orders from './pages/Orders'
 import Privacy from './pages/Privacy'
 import { AuthProvider, useAuth } from './state/auth'
 import { CartProvider, useCart } from './state/cart'
-import { SettingsProvider } from './state/settings'
+import { useNewOrders } from './state/newOrders'
+import { SettingsProvider, useSettings } from './state/settings'
 
 function TelegramBackButton() {
   const location = useLocation()
@@ -35,7 +36,9 @@ function TelegramBackButton() {
 
 function Shell() {
   const cart = useCart()
-  const { isAdmin, session } = useAuth()
+  const { isAdmin, session, chef } = useAuth()
+  const { settings } = useSettings()
+  const newOrders = useNewOrders(chef?.status === 'approved' ? chef.id : undefined, settings.timezone)
   const location = useLocation()
   const showFab = cart.count > 0 && location.pathname === '/'
   return (
@@ -87,7 +90,7 @@ function Shell() {
           {NavIcons.orders}Замовлення
         </NavLink>
         <NavLink to="/kitchen">
-          {NavIcons.chef}Кухня
+          {NavIcons.chef}Кухня{newOrders.total > 0 && <em className="badge-count">{newOrders.total}</em>}
         </NavLink>
       </nav>
       <TelegramBackButton />
