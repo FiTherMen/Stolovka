@@ -29,8 +29,8 @@
   --bad-bg: #fbe1dc;
   --info-bg: #fbe8c2;
   --info-fg: #7a410f;
-  --demo-bg: #3a2a1a;
-  --demo-fg: #fff7e6;
+  --demo-bg: #fbe8c2;
+  --demo-fg: #7a410f;
   --shadow: 0 1px 0 rgba(58, 42, 26, 0.06), 0 8px 24px -12px rgba(58, 42, 26, 0.25);
   --f-display: 'Lora', Georgia, 'Times New Roman', serif;
   --f-body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
@@ -41,77 +41,8 @@
   color-scheme: light;
 }
 
-/* «Вечірня кухня»: темна тема телефона, Telegram у темній темі або явний вибір. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #221915;
-    --card: #2e231d;
-    --text: #f7ebdd;
-    --muted: #c4ae99;
-    --border: #3d3029;
-    --accent: #f2a26b;
-    --accent-hover: #f7b98c;
-    --accent-text: #2a140a;
-    --link: #f2a26b;
-    --soft: #3a2a21;
-    --on-soft: #f6c29c;
-    --honey: #f6d58e;
-    --on-honey: #3a2600;
-    --chip: #3b2e17;
-    --on-chip: #f3d49b;
-    --herb: #2f3423;
-    --on-herb: #c9d7a4;
-    --gingham: rgba(242, 162, 107, 0.22);
-    --star: #f2a26b;
-    --danger: #ff8a7a;
-    --ok: #a9c47f;
-    --warn-bg: #4d3d1c;
-    --warn-fg: #ffe2a6;
-    --warn-border: #6b5524;
-    --ok-bg: #34402a;
-    --bad-bg: #4a2420;
-    --info-bg: #4a2e22;
-    --info-fg: #ffc9a8;
-    --demo-bg: #f7ebdd;
-    --demo-fg: #221915;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 28px -12px rgba(0, 0, 0, 0.6);
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #221915;
-  --card: #2e231d;
-  --text: #f7ebdd;
-  --muted: #c4ae99;
-  --border: #3d3029;
-  --accent: #f2a26b;
-  --accent-hover: #f7b98c;
-  --accent-text: #2a140a;
-  --link: #f2a26b;
-  --soft: #3a2a21;
-  --on-soft: #f6c29c;
-  --honey: #f6d58e;
-  --on-honey: #3a2600;
-  --chip: #3b2e17;
-  --on-chip: #f3d49b;
-  --herb: #2f3423;
-  --on-herb: #c9d7a4;
-  --gingham: rgba(242, 162, 107, 0.22);
-  --star: #f2a26b;
-  --danger: #ff8a7a;
-  --ok: #a9c47f;
-  --warn-bg: #4d3d1c;
-  --warn-fg: #ffe2a6;
-  --warn-border: #6b5524;
-  --ok-bg: #34402a;
-  --bad-bg: #4a2420;
-  --info-bg: #4a2e22;
-  --info-fg: #ffc9a8;
-  --demo-bg: #f7ebdd;
-  --demo-fg: #221915;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 28px -12px rgba(0, 0, 0, 0.6);
-  color-scheme: dark;
-}
+/* Застосунок завжди в світлій темі «Мед і карамель», навіть коли телефон або Telegram у темному режимі:
+   так вирішив власник (2026-10-29), темна «Вечірня кухня» вимкнена. */
 
 * {
   box-sizing: border-box;
@@ -379,8 +310,7 @@ button {
   display: flex;
   gap: 6px;
   margin: 8px 0;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--soft);
   padding: 4px;
   border-radius: 999px;
 }
@@ -404,8 +334,9 @@ button {
   font-size: 0.75rem;
 }
 .tab.active {
-  background: var(--soft);
+  background: var(--card);
   color: var(--on-soft);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .tabs.small .tab {
   font-size: 0.9rem;

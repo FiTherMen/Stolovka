@@ -1,6 +1,6 @@
 // Простий service worker: дозволяє встановити застосунок на телефон
 // і показує останню збережену версію сторінки без інтернету. Дані (меню, замовлення) завжди з мережі.
-const CACHE = 'stolovka-v1'
+const CACHE = 'tarilka-v2'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest', '/icon-192.png'])))

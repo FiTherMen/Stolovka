@@ -27,8 +27,9 @@ export function initTelegram() {
   tg.ready()
   tg.expand()
   document.documentElement.dataset.tg = '1'
-  // Кольори бренду лишаються своїми, з Telegram беремо лише світлу чи темну тему.
-  document.documentElement.dataset.theme = tg.colorScheme
+  // Кольори бренду не залежать від теми Telegram: застосунок завжди світлий «Мед і карамель».
+  ;(tg as unknown as { setHeaderColor?: (c: string) => void }).setHeaderColor?.('#FFF7E6')
+  ;(tg as unknown as { setBackgroundColor?: (c: string) => void }).setBackgroundColor?.('#FFF7E6')
 }
 
 export function haptic(type: 'success' | 'error' | 'warning') {
