@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Link, MemoryRouter, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Gingham, Logo, NavIcons } from './components/Brand'
 import DemoBar from './demo/DemoBar'
 import { isDemo } from './lib/demo'
+import { money } from './lib/format'
 import { isConfigured } from './lib/supabase'
 import { inTelegram, tg } from './lib/telegram'
 import Admin from './pages/admin/Admin'
@@ -34,24 +36,27 @@ function TelegramBackButton() {
 function Shell() {
   const cart = useCart()
   const { isAdmin, session } = useAuth()
+  const location = useLocation()
+  const showFab = cart.count > 0 && location.pathname === '/'
   return (
     <>
       {isDemo && <DemoBar />}
       <header className="topbar">
-        <Link to="/" className="logo">
-          🥣 Столовка
+        <Link to="/" className="logo" aria-label="Тарілка, на головну">
+          <Logo />
         </Link>
         <div className="topbar-links">
           {isAdmin && <NavLink to="/admin">Адмінка</NavLink>}
           {!session && <NavLink to="/login">Увійти</NavLink>}
         </div>
       </header>
+      <Gingham />
       {!isConfigured && (
         <p className="notice warn page">
           Застосунок ще не підключено до бази. Додайте VITE_SUPABASE_URL і VITE_SUPABASE_ANON_KEY (див. README).
         </p>
       )}
-      <main>
+      <main className={showFab ? 'has-fab' : undefined}>
         <Routes>
           <Route path="/" element={<Menu />} />
           <Route path="/dish/:id" element={<DishPage />} />
@@ -64,18 +69,25 @@ function Shell() {
           <Route path="*" element={<Menu />} />
         </Routes>
       </main>
+      {showFab && (
+        <Link to="/cart" className="cart-fab">
+          <span className="count">{cart.count}</span>
+          До кошика
+          <span className="sum">{money(cart.total)}</span>
+        </Link>
+      )}
       <nav className="bottom-nav">
         <NavLink end to="/">
-          <span>🍽️</span>Меню
+          {NavIcons.menu}Меню
         </NavLink>
         <NavLink to="/cart">
-          <span>🛒</span>Кошик{cart.count > 0 && <em className="badge-count">{cart.count}</em>}
+          {NavIcons.cart}Кошик{cart.count > 0 && <em className="badge-count">{cart.count}</em>}
         </NavLink>
         <NavLink to="/orders">
-          <span>🧾</span>Замовлення
+          {NavIcons.orders}Замовлення
         </NavLink>
         <NavLink to="/kitchen">
-          <span>👩‍🍳</span>Кухня
+          {NavIcons.chef}Кухня
         </NavLink>
       </nav>
       <TelegramBackButton />

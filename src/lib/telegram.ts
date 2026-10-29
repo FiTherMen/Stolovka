@@ -27,6 +27,8 @@ export function initTelegram() {
   tg.ready()
   tg.expand()
   document.documentElement.dataset.tg = '1'
+  // Кольори бренду лишаються своїми, з Telegram беремо лише світлу чи темну тему.
+  document.documentElement.dataset.theme = tg.colorScheme
 }
 
 export function haptic(type: 'success' | 'error' | 'warning') {

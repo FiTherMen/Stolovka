@@ -35,7 +35,8 @@ export default function Cart() {
   if (cart.lines.length === 0) {
     return (
       <div className="page center">
-        <p>Кошик порожній.</p>
+        <p className="hand">Тут поки порожньо.</p>
+        <p className="muted">Зазирніть у меню на сьогодні.</p>
         <Link className="btn" to="/">
           До меню
         </Link>

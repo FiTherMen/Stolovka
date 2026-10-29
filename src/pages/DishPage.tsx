@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { allergenLabel, TAGS } from '../lib/allergens'
-import { money, stars, dishEmoji } from '../lib/format'
+import { money, stars } from '../lib/format'
+import { Plate } from '../components/Brand'
 import { supabase } from '../lib/supabase'
 import { isSlotOpen } from '../lib/time'
 import { useCart } from '../state/cart'
@@ -40,19 +41,20 @@ export default function DishPage() {
 
   return (
     <div className="page dish-page">
-      <div className="gallery">
-        {dish.photo_urls.length ? <img src={dish.photo_urls[photo]} alt={dish.name} /> : <div className="placeholder big">{dishEmoji(dish.category)}</div>}
-        {dish.photo_urls.length > 1 && (
-          <div className="thumbs">
-            {dish.photo_urls.map((u, i) => (
-              <button key={u} className={i === photo ? 'active' : ''} onClick={() => setPhoto(i)}>
-                <img src={u} alt="" />
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="plate-stage">
+        <Plate src={dish.photo_urls[photo]} alt={dish.name} />
       </div>
+      {dish.photo_urls.length > 1 && (
+        <div className="thumbs">
+          {dish.photo_urls.map((u, i) => (
+            <button key={u} className={i === photo ? 'active' : ''} onClick={() => setPhoto(i)} aria-label={`Фото ${i + 1}`}>
+              <img src={u} alt="" />
+            </button>
+          ))}
+        </div>
+      )}
 
+      {dish.category && <div className="eyebrow">{dish.category}</div>}
       <h1>{dish.name}</h1>
       <p className="muted">
         Кухар: {dish.chefs?.display_name}

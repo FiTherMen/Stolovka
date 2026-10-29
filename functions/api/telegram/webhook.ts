@@ -44,7 +44,7 @@ export const onRequestPost: Handler = async ({ request, env }) => {
     await sendMessage(
       env.TELEGRAM_BOT_TOKEN,
       msg.chat.id,
-      `Привіт${msg.from?.first_name ? `, ${msg.from.first_name}` : ''}! 🥣\nТут можна замовити домашню їжу від кухарів нашого будинку: сніданок, обід або вечерю з доставкою до дверей. Оплата готівкою при отриманні.`,
+      `Добрий день${msg.from?.first_name ? `, ${msg.from.first_name}` : ''}! Це Тарілка: домашня їжа від кухарів з вашого будинку 🍲\nСніданок, обід і вечеря до дверей. Обід приймаємо до 10:00, вечерю до 16:00. Оплата готівкою при отриманні.`,
       { text: '🍽️ Відкрити меню', url: base },
     )
     return json({ ok: true })

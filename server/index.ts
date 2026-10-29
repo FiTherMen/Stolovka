@@ -91,4 +91,4 @@ createServer(async (req, res) => {
     if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'application/json' })
     res.end('{"error":"internal error"}')
   }
-}).listen(PORT, () => console.log(`Столовка: http://localhost:${PORT}`))
+}).listen(PORT, () => console.log(`Тарілка: http://localhost:${PORT}`))

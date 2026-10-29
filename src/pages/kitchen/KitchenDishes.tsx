@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { seedDishRows } from '../../data/seed'
-import { money, dishEmoji } from '../../lib/format'
+import { money } from '../../lib/format'
+import { Plate } from '../../components/Brand'
 import { errorText, supabase } from '../../lib/supabase'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
@@ -56,7 +57,7 @@ export default function KitchenDishes() {
       {!loading && dishes.length === 0 && <p className="muted">Страв ще немає. Додайте першу або завантажте тестове меню.</p>}
       {dishes.map((d) => (
         <div key={d.id} className={`card dish-row ${d.is_active ? '' : 'dim'}`}>
-          {d.photo_urls[0] ? <img src={d.photo_urls[0]} alt="" /> : <span className="placeholder">{dishEmoji(d.category)}</span>}
+          <Plate src={d.photo_urls[0]} />
           <div className="grow">
             <Link to={`/kitchen/dishes/${d.id}`}>
               <b>{d.name}</b>

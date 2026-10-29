@@ -2,7 +2,9 @@ import { confirmAction } from '../lib/confirm'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { errorText, supabase } from '../lib/supabase'
-import { money, stars, dishEmoji } from '../lib/format'
+import { money, stars } from '../lib/format'
+import { allergenLabel } from '../lib/allergens'
+import { Plate } from '../components/Brand'
 import { SLOTS, availableDates, cutoffLabel, dateLabel, isSlotOpen } from '../lib/time'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
@@ -155,34 +157,46 @@ function DishCard({ dish, rating, left, canOrder }: { dish: Dish; rating?: Ratin
   const qty = cart.qtyOf(dish.id)
   const soldOut = left !== undefined && left <= 0
   const maxed = left !== undefined && qty >= left
+  const meta = [
+    dish.weight_g ? `${dish.weight_g} г` : dish.volume_ml ? `${dish.volume_ml} мл` : null,
+    dish.kcal ? `${Math.round(dish.kcal)} ккал` : null,
+    dish.protein_g != null && dish.fat_g != null && dish.carbs_g != null ? `Б ${dish.protein_g} Ж ${dish.fat_g} В ${dish.carbs_g}` : null,
+  ].filter(Boolean)
   return (
     <article className="dish-card">
-      <Link to={`/dish/${dish.id}`} className="dish-photo">
-        {dish.photo_urls[0] ? <img src={dish.photo_urls[0]} alt={dish.name} loading="lazy" /> : <span className="placeholder">{dishEmoji(dish.category)}</span>}
+      <Link to={`/dish/${dish.id}`} className="dish-photo" aria-label={dish.name}>
+        <Plate src={dish.photo_urls[0]} alt={dish.name} />
         {soldOut && <span className="badge sold">немає</span>}
       </Link>
       <div className="dish-body">
         <Link to={`/dish/${dish.id}`} className="dish-name">
           {dish.name}
         </Link>
-        <div className="muted small">
-          {dish.chefs?.display_name}
-          {dish.weight_g ? ` · ${dish.weight_g} г` : dish.volume_ml ? ` · ${dish.volume_ml} мл` : ''}
-          {dish.kcal ? ` · ${Math.round(dish.kcal)} ккал` : ''}
-        </div>
+        <div className="muted small">{dish.chefs?.display_name}</div>
+        {meta.length > 0 && <div className="muted small">{meta.join(' · ')}</div>}
+        {(dish.tags.includes('vegetarian') || dish.allergens.length > 0) && (
+          <div className="mini-chips">
+            {dish.tags.includes('vegetarian') && <span className="herb">вегетаріанське</span>}
+            {dish.allergens.slice(0, 3).map((a) => (
+              <span key={a}>{allergenLabel(a)}</span>
+            ))}
+          </div>
+        )}
         {rating && (
           <div className="rating small">
             {stars(rating.avg_rating)} <span className="muted">{rating.avg_rating} ({rating.reviews_count})</span>
           </div>
         )}
-        {left !== undefined && left > 0 && left <= 5 && <div className="small warn-text">Лишилось {left}</div>}
+        {left !== undefined && left > 0 && left <= 5 && <div className="small muted">Сьогодні ще {left} порції</div>}
         <div className="dish-footer">
-          <strong>{money(dish.price_cents)}</strong>
+          <span className="price-tag">{money(dish.price_cents)}</span>
           {qty > 0 ? (
             <div className="stepper">
-              <button onClick={() => cart.setQty(dish.id, qty - 1)}>−</button>
+              <button onClick={() => cart.setQty(dish.id, qty - 1)} aria-label="Менше">
+                −
+              </button>
               <span>{qty}</span>
-              <button disabled={!canOrder || maxed} onClick={() => cart.add(dish)}>
+              <button disabled={!canOrder || maxed} onClick={() => cart.add(dish)} aria-label="Більше">
                 +
               </button>
             </div>
