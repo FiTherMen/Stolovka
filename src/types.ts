@@ -27,6 +27,7 @@ export interface Profile {
   building_id: string | null
   apartment: string | null
   role: 'customer' | 'chef' | 'admin'
+  telegram_link_token?: string
 }
 
 export interface Chef {

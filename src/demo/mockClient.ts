@@ -435,6 +435,10 @@ export function createDemoClient() {
         demoSignIn(DEMO_USERS.customer)
         return { data: { session }, error: null }
       },
+      signInWithOAuth: async () => {
+        demoSignIn(DEMO_USERS.customer)
+        return { data: {}, error: null }
+      },
       signUp: async () => {
         demoSignIn(DEMO_USERS.customer)
         return { data: { session }, error: null }
