@@ -1,3 +1,4 @@
+import { confirmAction } from '../../lib/confirm'
 import { useCallback, useEffect, useState } from 'react'
 import { callApi } from '../../lib/api'
 import { NEXT_STATUS, STATUS_LABELS, money } from '../../lib/format'
@@ -41,7 +42,7 @@ export default function KitchenOrders() {
   }, [load])
 
   const setStatus = async (order: Order, status: OrderStatus) => {
-    if (status === 'cancelled' && !confirm(`Скасувати замовлення №${order.number}?`)) return
+    if (status === 'cancelled' && !confirmAction(`Скасувати замовлення №${order.number}?`)) return
     const { error } = await supabase.rpc('set_order_status', {
       p_order_id: order.id,
       p_status: status,

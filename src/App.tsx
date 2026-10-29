@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Link, MemoryRouter, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import DemoBar from './demo/DemoBar'
+import { isDemo } from './lib/demo'
 import { isConfigured } from './lib/supabase'
 import { inTelegram, tg } from './lib/telegram'
 import Admin from './pages/admin/Admin'
@@ -34,6 +36,7 @@ function Shell() {
   const { isAdmin, session } = useAuth()
   return (
     <>
+      {isDemo && <DemoBar />}
       <header className="topbar">
         <Link to="/" className="logo">
           🥣 Столовка
@@ -80,9 +83,12 @@ function Shell() {
   )
 }
 
+// Демо відкривається всередині іншої сторінки, тому адресу не змінюємо.
+const Router = isDemo ? MemoryRouter : BrowserRouter
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <SettingsProvider>
         <AuthProvider>
           <CartProvider>
@@ -90,6 +96,6 @@ export default function App() {
           </CartProvider>
         </AuthProvider>
       </SettingsProvider>
-    </BrowserRouter>
+    </Router>
   )
 }

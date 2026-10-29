@@ -1,7 +1,9 @@
+import { isDemo } from './demo'
 import { supabase } from './supabase'
 
 /** Виклик серверної функції з токеном поточного користувача. Помилки сповіщень не блокують роботу. */
 export async function callApi(path: string, body: unknown): Promise<boolean> {
+  if (isDemo) return true
   try {
     const { data } = await supabase.auth.getSession()
     const res = await fetch(path, {

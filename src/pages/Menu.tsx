@@ -1,7 +1,8 @@
+import { confirmAction } from '../lib/confirm'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { errorText, supabase } from '../lib/supabase'
-import { money, stars } from '../lib/format'
+import { money, stars, dishEmoji } from '../lib/format'
 import { SLOTS, availableDates, cutoffLabel, dateLabel, isSlotOpen } from '../lib/time'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
@@ -84,7 +85,7 @@ export default function Menu() {
 
   const choose = (date: string, slot: Slot) => {
     if (date === selection.date && slot === selection.slot) return
-    if (cart.count > 0 && !confirm('У кошику страви на інший час. Очистити кошик і перейти?')) return
+    if (cart.count > 0 && !confirmAction('У кошику страви на інший час. Очистити кошик і перейти?')) return
     if (cart.count > 0) cart.clear()
     cart.setTarget(date, slot)
   }
@@ -157,7 +158,7 @@ function DishCard({ dish, rating, left, canOrder }: { dish: Dish; rating?: Ratin
   return (
     <article className="dish-card">
       <Link to={`/dish/${dish.id}`} className="dish-photo">
-        {dish.photo_urls[0] ? <img src={dish.photo_urls[0]} alt={dish.name} loading="lazy" /> : <span className="placeholder">🍲</span>}
+        {dish.photo_urls[0] ? <img src={dish.photo_urls[0]} alt={dish.name} loading="lazy" /> : <span className="placeholder">{dishEmoji(dish.category)}</span>}
         {soldOut && <span className="badge sold">немає</span>}
       </Link>
       <div className="dish-body">

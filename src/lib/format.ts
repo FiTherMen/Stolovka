@@ -31,3 +31,18 @@ export function plural(n: number, one: string, few: string, many: string) {
   if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few
   return many
 }
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  'Перші страви': '🍲',
+  'Другі страви': '🥘',
+  Сніданки: '🥞',
+  Десерти: '🍒',
+  Закуски: '🥗',
+  Салати: '🥗',
+  Випічка: '🥐',
+  Напої: '🍹',
+  Комплекси: '🍱',
+}
+
+/** Емодзі-заглушка, поки в страви немає фото. */
+export const dishEmoji = (category: string | null) => CATEGORY_EMOJI[category ?? ''] ?? '🍽️'

@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-demo
+dist-server
+.env
+.env.*
+!.env.example
+.dev.vars
+.wrangler
+.git

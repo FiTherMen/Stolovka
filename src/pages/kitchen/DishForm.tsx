@@ -1,3 +1,4 @@
+import { confirmAction } from '../../lib/confirm'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ALLERGENS, TAGS } from '../../lib/allergens'
@@ -161,7 +162,7 @@ export default function DishForm() {
   }
 
   const remove = async () => {
-    if (!id || !confirm('Видалити страву назавжди? Краще просто вимкнути її, щоб зберегти відгуки.')) return
+    if (!id || !confirmAction('Видалити страву назавжди? Краще просто вимкнути її, щоб зберегти відгуки.')) return
     const { error } = await supabase.from('dishes').delete().eq('id', id)
     if (error) setError(errorText(error))
     else navigate('/kitchen/dishes')

@@ -1,3 +1,4 @@
+import { confirmAction } from '../lib/confirm'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { STATUS_LABELS, money } from '../lib/format'
@@ -68,7 +69,7 @@ export default function Orders() {
   }
 
   const cancel = async (order: Order) => {
-    if (!confirm('Скасувати замовлення?')) return
+    if (!confirmAction('Скасувати замовлення?')) return
     const { error } = await supabase.rpc('cancel_my_order', { p_order_id: order.id })
     if (error) setMessage(errorText(error))
     void load()

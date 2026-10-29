@@ -1,0 +1,11 @@
+# Caddy сам отримує і поновлює HTTPS-сертифікати Let's Encrypt.
+{$APP_DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000
+}
+
+# Лише для варіанту Б (власний Supabase на цьому ж сервері, порт 8000):
+# розкоментуйте блок нижче і задайте SUPABASE_DOMAIN у .env.
+# {$SUPABASE_DOMAIN} {
+# 	reverse_proxy host.docker.internal:8000
+# }

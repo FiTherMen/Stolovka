@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json && tsc -p functions/tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p functions/tsconfig.json",
+    "build:demo": "node scripts/build-demo.mjs",
+    "build:server": "vite build --ssr server/index.ts --outDir dist-server --emptyOutDir",
+    "start": "node dist-server/index.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

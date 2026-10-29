@@ -4,6 +4,10 @@
 
 Один вебзастосунок працює як сайт, як застосунок на телефоні (PWA, «Додати на головний екран») і як Telegram Mini App.
 
+**Демо без бази:** `npm run build:demo` збирає одну сторінку `dist-demo/stolovka-demo.html` з тестовими даними і перемикачем ролей (клієнт / кухар / адмін).
+
+**Де запускати:** нижче описано Cloudflare Pages + Supabase (усе безкоштовно). Для власного сервера з Docker дивіться [DEPLOY.md](DEPLOY.md).
+
 ## Що вміє прототип
 
 **Клієнт**
@@ -80,7 +84,7 @@
 |---|---|---|
 | `VITE_SUPABASE_URL` | Text | Project URL з Supabase |
 | `VITE_SUPABASE_ANON_KEY` | Text | ключ `anon public` |
-| `VITE_TELEGRAM_BOT_USERNAME` | Text | імʼя бота без `@` |
+| `VITE_TELEGRAM_BOT_USERNAME` | Text | `online_stolovka_bot` |
 | `SUPABASE_URL` | Text | той самий Project URL |
 | `SUPABASE_ANON_KEY` | Text | ключ `anon public` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | ключ `service_role` |
@@ -111,6 +115,9 @@ where id = (select id from auth.users where email = 'you@example.com');
 ```
 
 ## Локальна розробка
+
+`npm run dev` з `VITE_DEMO=1` запускає застосунок на тестових даних без Supabase: `VITE_DEMO=1 npm run dev`.
+
 
 ```bash
 npm install
