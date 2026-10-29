@@ -983,3 +983,12 @@ legend {
   font-weight: 700;
   margin: 8px 0;
 }
+
+/* З мишкою (компʼютер) горизонтальний скрол незручний: дні, вікна і вкладки переносяться на новий рядок.
+   На телефоні лишається гортання пальцем. */
+@media (hover: hover) and (pointer: fine) {
+  .scroll-x {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
