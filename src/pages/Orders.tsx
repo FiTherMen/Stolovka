@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { STATUS_LABELS, money } from '../lib/format'
 import { errorText, supabase } from '../lib/supabase'
-import { botUsername, inTelegram } from '../lib/telegram'
 import { dateLabel } from '../lib/time'
 import { useAuth } from '../state/auth'
 import { useCart } from '../state/cart'
@@ -11,7 +10,7 @@ import { useSettings } from '../state/settings'
 import type { Dish, Order } from '../types'
 
 export default function Orders() {
-  const { session, profile } = useAuth()
+  const { session } = useAuth()
   const { settings } = useSettings()
   const cart = useCart()
   const [params] = useSearchParams()
@@ -79,17 +78,6 @@ export default function Orders() {
   return (
     <div className="page">
       <h1>Мої замовлення</h1>
-      {profile && !profile.telegram_id && profile.telegram_link_token && botUsername && !inTelegram && (
-        <div className="card tg-link">
-          <div>
-            <b>Сповіщення в Telegram</b>
-            <div className="small muted">Бот напише, коли кухар прийме, приготує і принесе замовлення.</div>
-          </div>
-          <a className="btn small" href={`https://t.me/${botUsername}?start=link_${profile.telegram_link_token}`} target="_blank" rel="noreferrer">
-            Підключити Telegram
-          </a>
-        </div>
-      )}
       {message && <p className="notice">{message}</p>}
       {loading && <p className="muted">Завантаження…</p>}
       {!loading && orders.length === 0 && <p className="muted">Замовлень ще немає.</p>}

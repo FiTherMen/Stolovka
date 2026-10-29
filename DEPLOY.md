@@ -144,45 +144,6 @@ docker compose logs -f app     # має зʼявитися «Столовка: h
 2. @BotFather → `/setdomain` → @online_stolovka_bot → `<APP_DOMAIN>` (потрібно для кнопки «Увійти через Telegram» на сайті).
 3. Власник пише боту `/start`, натискає «Відкрити меню». Він автоматично стає адміністратором (`/admin` у застосунку).
 
-## 6. Вхід через Google (необовʼязково)
-
-Кнопка «Увійти через Google» вже є на сайті. Щоб вона запрацювала, потрібен ключ Google і два рядки в налаштуваннях Supabase. У Telegram Mini App кнопки немає: Google забороняє вхід у вбудованому браузері, там працює вхід через Telegram.
-
-**6.1. Ключ у Google Cloud (робить власник, ~10 хв).**
-
-1. https://console.cloud.google.com → створіть проєкт «Tarilka».
-2. **APIs & Services → OAuth consent screen** (або **Google Auth Platform → Branding**): тип **External**, назва застосунку «Тарілка», ваша пошта для підтримки і контактів, домен `stolovka.price.biz.ua`. Scopes додавати не треба (вистачає email і profile). Опублікуйте застосунок (**Publish app**), інакше увійти зможуть лише тестові користувачі.
-3. **Credentials → Create credentials → OAuth client ID**, тип **Web application**:
-   - **Authorized JavaScript origins:** `https://stolovka.price.biz.ua`
-   - **Authorized redirect URIs:** `<адреса Supabase>/auth/v1/callback`, тобто значення `API_EXTERNAL_URL` з `/opt/supabase/.env` плюс `/auth/v1/callback`. Якщо Supabase відкривається на тому ж домені, це `https://stolovka.price.biz.ua/auth/v1/callback`.
-4. Google покаже **Client ID** і **Client secret**. Ці два значення йдуть лише в `.env` на сервері, не в чат і не в репозиторій.
-
-**6.2. Supabase на сервері (варіант Б).** У `/opt/supabase/.env` додайте:
-
-```
-GOOGLE_ENABLED=true
-GOOGLE_CLIENT_ID=<Client ID>
-GOOGLE_SECRET=<Client secret>
-ADDITIONAL_REDIRECT_URLS=https://stolovka.price.biz.ua/**
-```
-
-і в `/opt/supabase/docker-compose.yml` у сервіс `auth` → `environment` додайте (якщо таких рядків ще немає):
-
-```yaml
-      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_ENABLED}
-      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_SECRET}
-      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL}/auth/v1/callback
-```
-
-Перевірте, що `SITE_URL=https://stolovka.price.biz.ua` і що `GOTRUE_URI_ALLOW_LIST` у сервісі `auth` бере значення з `${ADDITIONAL_REDIRECT_URLS}`. Потім `cd /opt/supabase && docker compose up -d auth`.
-
-Для варіанту А те саме робиться в панелі Supabase: **Authentication → Sign In / Providers → Google** (Client ID і Secret), а `https://stolovka.price.biz.ua/**` додається в **Authentication → URL Configuration → Redirect URLs**.
-
-**6.3. Міграція бази.** Виконайте `supabase/migrations/0002_link_telegram.sql` так само, як у кроці А2 або Б3. Вона додає кнопку «Підключити Telegram» для тих, хто увійшов через Google або пошту: після привʼязки бот надсилає їм сповіщення, а Mini App відкриває той самий акаунт.
-
-**Перевірка:** на сайті «Увійти» → «Увійти через Google» → вибір акаунта → повернення на сайт уже з входом. Профіль і роль створюються так само, як для входу через Telegram.
-
 ## Оновлення
 
 ```bash

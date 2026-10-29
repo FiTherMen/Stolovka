@@ -2,7 +2,7 @@ import { adminClient, appUrl, json, type Handler } from '../../_lib/env'
 import { sendMessage } from '../../_lib/telegram'
 
 interface Update {
-  message?: { chat: { id: number; type: string }; from?: { id: number; first_name?: string; username?: string }; text?: string }
+  message?: { chat: { id: number; type: string }; from?: { id: number; first_name?: string }; text?: string }
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -37,33 +37,6 @@ export const onRequestPost: Handler = async ({ request, env }) => {
       }
     }
     await sendMessage(env.TELEGRAM_BOT_TOKEN, msg.chat.id, 'Посилання застаріло. Відкрийте кабінет кухаря і натисніть «Підключити Telegram» ще раз.')
-    return json({ ok: true })
-  }
-
-  if (command === '/start' && payload?.startsWith('link_')) {
-    const token = payload.slice(5)
-    const db = adminClient(env)
-    const { data: profile } = UUID.test(token)
-      ? await db.from('profiles').select('id, telegram_id').eq('telegram_link_token', token).maybeSingle()
-      : { data: null }
-    if (!profile) {
-      await sendMessage(env.TELEGRAM_BOT_TOKEN, msg.chat.id, 'Посилання застаріло. Відкрийте «Замовлення» у застосунку і натисніть «Підключити Telegram» ще раз.')
-      return json({ ok: true })
-    }
-    const { data: taken } = await db.from('profiles').select('id').eq('telegram_id', msg.chat.id).neq('id', profile.id).maybeSingle()
-    if (taken) {
-      await sendMessage(
-        env.TELEGRAM_BOT_TOKEN,
-        msg.chat.id,
-        'Цей Telegram уже привʼязаний до іншого акаунта Тарілки. Напишіть адміністратору, і ми обʼєднаємо акаунти.',
-      )
-      return json({ ok: true })
-    }
-    await db.from('profiles').update({ telegram_id: msg.chat.id, telegram_username: msg.from?.username ?? null }).eq('id', profile.id)
-    await sendMessage(env.TELEGRAM_BOT_TOKEN, msg.chat.id, '✅ Готово! Тепер я писатиму сюди про ваші замовлення, а меню в Telegram відкриє той самий акаунт.', {
-      text: '🍽️ Відкрити меню',
-      url: base,
-    })
     return json({ ok: true })
   }
 
