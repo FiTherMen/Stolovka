@@ -43,6 +43,8 @@ export function seedDishRows(chefId: string): Omit<Dish, 'id' | 'is_hidden' | 'c
     price_cents: Math.round(d.price_eur * 100),
     slots: seedSlots(d.category),
     daily_limit: null,
+    unit: 'portion' as const,
+    lead_days: 0,
     is_active: true,
     sort_order: i,
   }))

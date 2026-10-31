@@ -1,4 +1,4 @@
-import type { Settings, Slot } from '../types'
+import type { Dish, Settings, Slot } from '../types'
 
 export const SLOTS: Slot[] = ['breakfast', 'lunch', 'dinner']
 
@@ -31,6 +31,29 @@ export function cutoffOf(settings: Settings, date: string, slot: Slot): string {
 export function isSlotOpen(settings: Settings, date: string, slot: Slot): boolean {
   const cfg = settings.slots[slot]
   return cfg.enabled && nowIn(settings.timezone) < cutoffOf(settings, date, slot)
+}
+
+/** Дедлайн для конкретної страви: страви «заздалегідь» треба замовити за N днів до advance_cutoff_time. */
+export function dishCutoffOf(settings: Settings, dish: Pick<Dish, 'lead_days'>, date: string, slot: Slot): string {
+  const slotCutoff = cutoffOf(settings, date, slot)
+  if (!dish.lead_days) return slotCutoff
+  const own = `${addDays(date, -dish.lead_days)} ${advanceTime(settings)}`
+  return own < slotCutoff ? own : slotCutoff
+}
+
+export function isDishOpen(settings: Settings, dish: Pick<Dish, 'lead_days'>, date: string, slot: Slot): boolean {
+  return isSlotOpen(settings, date, slot) && nowIn(settings.timezone) < dishCutoffOf(settings, dish, date, slot)
+}
+
+export function advanceTime(settings: Settings): string {
+  return (settings.advance_cutoff_time ?? '21:00').slice(0, 5)
+}
+
+/** «Замовити до 21:00 напередодні» / «… за 2 дні». Порожньо для звичайних страв. */
+export function leadLabel(settings: Settings, dish: Pick<Dish, 'lead_days'>): string {
+  if (!dish.lead_days) return ''
+  const when = dish.lead_days === 1 ? 'напередодні' : `за ${dish.lead_days} ${dish.lead_days < 5 ? 'дні' : 'днів'}`
+  return `Під замовлення: до ${advanceTime(settings)} ${when}`
 }
 
 export function availableDates(settings: Settings): string[] {

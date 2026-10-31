@@ -32,3 +32,8 @@ export function plural(n: number, one: string, few: string, many: string) {
   return many
 }
 
+
+/** «шт» або «порц.» для кількостей у кухні. */
+export function unitShort(unit: string | null | undefined): string {
+  return unit === 'piece' ? 'шт' : 'порц.'
+}

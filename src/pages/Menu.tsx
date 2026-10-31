@@ -5,7 +5,7 @@ import { errorText, supabase } from '../lib/supabase'
 import { money, stars } from '../lib/format'
 import { allergenLabel } from '../lib/allergens'
 import { Plate } from '../components/Brand'
-import { SLOTS, availableDates, cutoffLabel, dateLabel, isSlotOpen } from '../lib/time'
+import { SLOTS, availableDates, cutoffLabel, dateLabel, isDishOpen, isSlotOpen, leadLabel } from '../lib/time'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
 import type { Dish, Settings, Slot } from '../types'
@@ -143,7 +143,7 @@ export default function Menu() {
           <h2 className="section-title">{category}</h2>
           <div className="dish-grid">
             {list.map((d) => (
-              <DishCard key={d.id} dish={d} rating={ratings[d.id]} left={left[d.id]} canOrder={open} />
+              <DishCard key={d.id} dish={d} rating={ratings[d.id]} left={left[d.id]} canOrder={open && isDishOpen(settings, d, selection.date, selection.slot)} lead={leadLabel(settings, d)} />
             ))}
           </div>
         </section>
@@ -152,7 +152,7 @@ export default function Menu() {
   )
 }
 
-function DishCard({ dish, rating, left, canOrder }: { dish: Dish; rating?: Rating; left?: number; canOrder: boolean }) {
+function DishCard({ dish, rating, left, canOrder, lead }: { dish: Dish; rating?: Rating; left?: number; canOrder: boolean; lead: string }) {
   const cart = useCart()
   const qty = cart.qtyOf(dish.id)
   const soldOut = left !== undefined && left <= 0
@@ -187,9 +187,17 @@ function DishCard({ dish, rating, left, canOrder }: { dish: Dish; rating?: Ratin
             {stars(rating.avg_rating)} <span className="muted">{rating.avg_rating} ({rating.reviews_count})</span>
           </div>
         )}
-        {left !== undefined && left > 0 && left <= 5 && <div className="small muted">Сьогодні ще {left} порції</div>}
+        {left !== undefined && left > 0 && left <= 5 && (
+          <div className="small muted">
+            Ще {left} {dish.unit === 'piece' ? 'шт' : 'порц.'} на цей день
+          </div>
+        )}
+        {lead && <div className={`small ${canOrder ? 'muted' : 'warn-text'}`}>{canOrder ? lead : `${lead}, на цю дату вже не встигнути`}</div>}
         <div className="dish-footer">
-          <span className="price-tag">{money(dish.price_cents)}</span>
+          <span className="price-tag">
+            {money(dish.price_cents)}
+            {dish.unit === 'piece' && <small> / шт</small>}
+          </span>
           {qty > 0 ? (
             <div className="stepper">
               <button onClick={() => cart.setQty(dish.id, qty - 1)} aria-label="Менше">

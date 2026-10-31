@@ -2,6 +2,7 @@ import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { useAuth } from '../../state/auth'
 import ChefRegister from './ChefRegister'
 import KitchenDishes from './KitchenDishes'
+import KitchenPrep from './KitchenPrep'
 import KitchenOrders from './KitchenOrders'
 import KitchenProfile from './KitchenProfile'
 import KitchenReviews from './KitchenReviews'
@@ -32,9 +33,12 @@ export default function Kitchen() {
       )}
       {chef.status === 'rejected' && <p className="notice warn">Заявку відхилено. Напишіть адміністратору, якщо це помилка.</p>}
       {chef.status === 'suspended' && <p className="notice warn">Кабінет призупинено адміністратором, ваші страви приховані з меню.</p>}
-      <nav className="tabs small">
+      <nav className="tabs small scroll-x">
         <NavLink end to="/kitchen" className="tab">
           Замовлення
+        </NavLink>
+        <NavLink to="/kitchen/prep" className="tab">
+          Що готувати
         </NavLink>
         <NavLink to="/kitchen/dishes" className="tab">
           Страви
@@ -48,6 +52,7 @@ export default function Kitchen() {
       </nav>
       <Routes>
         <Route index element={<KitchenOrders />} />
+        <Route path="prep" element={<KitchenPrep />} />
         <Route path="dishes" element={<KitchenDishes />} />
         <Route path="dishes/new" element={<DishForm />} />
         <Route path="dishes/:id" element={<DishForm />} />

@@ -10,6 +10,9 @@ import { Readable } from 'node:stream'
 import * as authTelegram from '../functions/api/auth/telegram'
 import * as notifyNewOrder from '../functions/api/notify/new-order'
 import * as notifyStatus from '../functions/api/notify/status'
+import * as notifyPrep from '../functions/api/notify/prep-summary'
+import { adminClient } from '../functions/_lib/env'
+import { sendPrepSummaries } from '../functions/_lib/prep'
 import * as telegramSetup from '../functions/api/telegram/setup'
 import * as telegramWebhook from '../functions/api/telegram/webhook'
 import type { Env } from '../functions/_lib/env'
@@ -22,6 +25,7 @@ const ROUTES: Record<string, Partial<Record<string, Handler>>> = {
   '/api/notify/status': { POST: notifyStatus.onRequestPost as unknown as Handler },
   '/api/telegram/webhook': { POST: telegramWebhook.onRequestPost as unknown as Handler },
   '/api/telegram/setup': { GET: telegramSetup.onRequestGet as unknown as Handler },
+  '/api/notify/prep-summary': { GET: notifyPrep.onRequestGet as unknown as Handler },
 }
 
 const PORT = Number(process.env.PORT || 3000)
@@ -92,3 +96,23 @@ createServer(async (req, res) => {
     res.end('{"error":"internal error"}')
   }
 }).listen(PORT, () => console.log(`Тарілка: http://localhost:${PORT}`))
+
+// Щовечора о PREP_SUMMARY_TIME (за замовчуванням 21:05 за Мадридом, одразу після дедлайну сніданків)
+// кухарі з підключеним Telegram отримують «Що готувати на завтра». PREP_SUMMARY_TIME=off вимикає.
+const PREP_TIME = (process.env.PREP_SUMMARY_TIME || '21:05').trim()
+const PREP_TZ = process.env.PREP_SUMMARY_TZ || 'Europe/Madrid'
+let prepSentOn = ''
+if (/^\d{2}:\d{2}$/.test(PREP_TIME) && env.SUPABASE_SERVICE_ROLE_KEY && env.TELEGRAM_BOT_TOKEN) {
+  setInterval(() => {
+    const now = new Intl.DateTimeFormat('en-CA', {
+      timeZone: PREP_TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).format(new Date()) // '2026-10-31, 21:05'
+    const [day, time] = now.split(', ')
+    if (time !== PREP_TIME || prepSentOn === day) return
+    prepSentOn = day
+    const base = env.PUBLIC_APP_URL ? env.PUBLIC_APP_URL.replace(/\/$/, '') : null
+    sendPrepSummaries(adminClient(env), env.TELEGRAM_BOT_TOKEN, base)
+      .then((r) => console.log(`Що готувати на ${r.date}: надіслано ${r.sent}`))
+      .catch((e) => console.error('Що готувати: помилка', e))
+  }, 20_000)
+}

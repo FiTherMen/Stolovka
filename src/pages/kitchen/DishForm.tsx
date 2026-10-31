@@ -4,10 +4,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ALLERGENS, TAGS } from '../../lib/allergens'
 import { resizeImage } from '../../lib/images'
 import { errorText, supabase } from '../../lib/supabase'
-import { SLOTS } from '../../lib/time'
+import { SLOTS, advanceTime } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
-import type { Dish, Slot } from '../../types'
+import type { Dish, Slot, Unit } from '../../types'
 
 interface FormState {
   name: string
@@ -27,6 +27,8 @@ interface FormState {
   storage_note: string
   slots: Slot[]
   daily_limit: string
+  unit: Unit
+  lead_days: number
   photo_urls: string[]
   is_active: boolean
 }
@@ -49,6 +51,8 @@ const EMPTY: FormState = {
   storage_note: 'Зберігати в холодильнику, зʼїсти протягом 24 год',
   slots: ['lunch', 'dinner'],
   daily_limit: '',
+  unit: 'portion',
+  lead_days: 0,
   photo_urls: [],
   is_active: true,
 }
@@ -95,6 +99,8 @@ export default function DishForm() {
           storage_note: d.storage_note ?? '',
           slots: d.slots,
           daily_limit: str(d.daily_limit),
+          unit: d.unit ?? 'portion',
+          lead_days: d.lead_days ?? 0,
           photo_urls: d.photo_urls,
           is_active: d.is_active,
         })
@@ -152,6 +158,8 @@ export default function DishForm() {
       storage_note: f.storage_note.trim() || null,
       slots: f.slots,
       daily_limit: num(f.daily_limit),
+      unit: f.unit,
+      lead_days: f.lead_days,
       photo_urls: f.photo_urls,
       is_active: f.is_active,
     }
@@ -214,7 +222,7 @@ export default function DishForm() {
           <input value={f.price} onChange={(e) => set('price', e.target.value)} inputMode="decimal" required pattern="[0-9]+([.,][0-9]{1,2})?" />
         </label>
         <label>
-          Ліміт порцій на день
+          {f.unit === 'piece' ? 'Ліміт штук на день' : 'Ліміт порцій на день'}
           <input value={f.daily_limit} onChange={(e) => set('daily_limit', e.target.value)} inputMode="numeric" placeholder="без ліміту" />
         </label>
         <label>
@@ -283,6 +291,27 @@ export default function DishForm() {
             </button>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Як продаєте</legend>
+        <div className="chips wrap">
+          <button type="button" className={`chip ${f.unit === 'portion' ? 'active' : ''}`} onClick={() => set('unit', 'portion')}>
+            Порціями
+          </button>
+          <button type="button" className={`chip ${f.unit === 'piece' ? 'active' : ''}`} onClick={() => set('unit', 'piece')}>
+            Поштучно (торт, пиріг)
+          </button>
+        </div>
+        <label>
+          Коли треба замовити
+          <select value={f.lead_days} onChange={(e) => set('lead_days', Number(e.target.value))}>
+            <option value={0}>Як звичайно, до дедлайну вікна</option>
+            <option value={1}>Заздалегідь: до {advanceTime(settings)} напередодні</option>
+            <option value={2}>Заздалегідь: за 2 дні</option>
+            <option value={3}>Заздалегідь: за 3 дні</option>
+          </select>
+        </label>
       </fieldset>
 
       <fieldset>

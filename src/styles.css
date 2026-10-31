@@ -995,3 +995,36 @@ legend {
 .ok-text {
   color: var(--on-herb);
 }
+
+/* «Що готувати» */
+.prep-line {
+  padding: 8px 0;
+  border-top: 1px dashed var(--border);
+}
+.prep-line:first-of-type {
+  border-top: none;
+}
+.unit-badge {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--honey);
+  color: var(--on-honey);
+  vertical-align: 1px;
+}
+.small-title {
+  font-size: 0.95rem;
+  margin: 14px 0 6px;
+  color: var(--muted);
+}
+.prep-order .row + .row {
+  margin-top: 2px;
+}
+.prep-line b,
+.prep-order .row > span:last-child {
+  white-space: nowrap;
+  padding-left: 8px;
+}

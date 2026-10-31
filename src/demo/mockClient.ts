@@ -2,11 +2,11 @@
  * Демо-замінник клієнта Supabase: зберігає дані в памʼяті браузера (і в localStorage),
  * підтримує лише ті запити, які робить застосунок. Логіка RPC повторює функції з міграції.
  */
-import { DEFAULT_SETTINGS, isSlotOpen, todayIn } from '../lib/time'
+import { DEFAULT_SETTINGS, isDishOpen, isSlotOpen, todayIn } from '../lib/time'
 import type { Settings, Slot } from '../types'
 import { DEMO_USERS, buildDemoDb, type DemoDb, type Row } from './demoData'
 
-const KEY = 'stolovka.demo.v1'
+const KEY = 'stolovka.demo.v2'
 type Result = { data: unknown; error: { message: string } | null; count?: number }
 
 let db: DemoDb = load()
@@ -115,6 +115,10 @@ class Query implements PromiseLike<Result> {
   }
   eq(col: string, value: unknown) {
     this.filters.push((r) => pick(r, col) === value)
+    return this
+  }
+  neq(col: string, value: unknown) {
+    this.filters.push((r) => pick(r, col) !== value)
     return this
   }
   in(col: string, values: unknown[]) {
@@ -267,6 +271,9 @@ const RPC: Record<string, (args: Row) => Result> = {
       const chef = dish && db.chefs.find((c) => c.id === dish.chef_id)
       if (!dish || !dish.is_active || dish.is_hidden || chef?.status !== 'approved') return fail('Страва недоступна, оновіть меню')
       if (!(dish.slots as Slot[]).includes(slot)) return fail(`Страву «${dish.name}» не готують на це вікно`)
+      if (!isDishOpen(s, dish as { lead_days: number }, date, slot)) {
+        return fail(`Страву «${dish.name}» треба замовляти за ${dish.lead_days} дн. наперед. Оберіть пізнішу дату.`)
+      }
       if (dish.daily_limit != null && dishSold(dish.id as string, date) + it.qty > (dish.daily_limit as number)) {
         return fail(`Страви «${dish.name}» на цей день лишилось ${Math.max((dish.daily_limit as number) - dishSold(dish.id as string, date), 0)}`)
       }
@@ -298,7 +305,7 @@ const RPC: Record<string, (args: Row) => Result> = {
         created_at: new Date().toISOString(),
       })
       mine.forEach((c) =>
-        db.order_items.push({ id: uid(), order_id: id, dish_id: c.dish.id, dish_name: c.dish.name, price_cents: c.dish.price_cents, qty: c.qty }),
+        db.order_items.push({ id: uid(), order_id: id, dish_id: c.dish.id, dish_name: c.dish.name, price_cents: c.dish.price_cents, qty: c.qty, unit: c.dish.unit ?? 'portion' }),
       )
       ids.push(id)
     }

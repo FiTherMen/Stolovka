@@ -41,6 +41,29 @@ export function buildDemoDb(): DemoDb {
   }))
   dishes.push(
     {
+      ...dishes[9],
+      id: 'dish-cake',
+      name: 'Торт «Медовик»',
+      category: 'Десерти',
+      description: 'Цілий медовий торт зі сметанним кремом, 8 шматків. Печу за день до видачі.',
+      weight_g: 1200,
+      volume_ml: null,
+      portion_note: 'цілий торт, 8 шматків',
+      kcal: null,
+      protein_g: null,
+      fat_g: null,
+      carbs_g: null,
+      ingredients: ['борошно', 'мед', 'яйця', 'цукор', 'сметана', 'вершкове масло', 'сода'],
+      allergens: ['gluten', 'eggs', 'milk'],
+      tags: ['vegetarian'],
+      price_cents: 2800,
+      slots: ['breakfast', 'lunch', 'dinner'],
+      unit: 'piece',
+      lead_days: 1,
+      daily_limit: 3,
+      sort_order: 20,
+    },
+    {
       ...dishes[3],
       id: 'dish-m1',
       chef_id: PENDING_CHEF,
@@ -78,7 +101,7 @@ export function buildDemoDb(): DemoDb {
       ...o,
     })
     lines.forEach(([dish, qty], i) =>
-      items.push({ id: `${id}-item-${i}`, order_id: id, dish_id: dish.id, dish_name: dish.name, price_cents: dish.price_cents, qty }),
+      items.push({ id: `${id}-item-${i}`, order_id: id, dish_id: dish.id, dish_name: dish.name, price_cents: dish.price_cents, qty, unit: dish.unit ?? 'portion' }),
     )
     return id
   }
@@ -123,6 +146,19 @@ export function buildDemoDb(): DemoDb {
     [
       [d(1), 2],
       [d(2), 1],
+    ],
+  )
+
+  const cake = dishes.find((x) => x.id === 'dish-cake')!
+  addOrder(
+    { customer_id: 'neighbour-e', apartment: '8', customer_name: 'Тетяна', phone: '+34 633 777 888', delivery_date: tomorrow, slot: 'dinner', status: 'accepted', comment: 'Напис «З днем народження, Марко»' },
+    [[cake, 1]],
+  )
+  addOrder(
+    { customer_id: 'neighbour-f', apartment: '3', customer_name: 'Петро', delivery_date: tomorrow, slot: 'lunch', status: 'accepted' },
+    [
+      [d(1), 1],
+      [cake, 1],
     ],
   )
 

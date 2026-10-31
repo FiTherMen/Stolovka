@@ -1,7 +1,7 @@
 import { confirmAction } from '../../lib/confirm'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { callApi } from '../../lib/api'
-import { NEXT_STATUS, STATUS_LABELS, money } from '../../lib/format'
+import { NEXT_STATUS, STATUS_LABELS, money, unitShort } from '../../lib/format'
 import { errorText, supabase } from '../../lib/supabase'
 import { SLOTS, addDays, dateLabel, todayIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
@@ -94,10 +94,12 @@ export default function KitchenOrders() {
         const list = orders.filter((o) => o.slot === slot)
         if (list.length === 0) return null
         const cfg = settings.slots[slot]
-        const summary = new Map<string, number>()
+        const summary = new Map<string, { qty: number; unit?: string }>()
         list
           .filter((o) => o.status !== 'cancelled')
-          .forEach((o) => o.order_items.forEach((i) => summary.set(i.dish_name, (summary.get(i.dish_name) ?? 0) + i.qty)))
+          .forEach((o) =>
+            o.order_items.forEach((i) => summary.set(i.dish_name, { qty: (summary.get(i.dish_name)?.qty ?? 0) + i.qty, unit: i.unit })),
+          )
         return (
           <section key={slot}>
             <h2 className="section-title">
@@ -105,10 +107,12 @@ export default function KitchenOrders() {
             </h2>
             <div className="card prep">
               <b>Що готувати:</b>
-              {[...summary.entries()].map(([name, qty]) => (
+                  {[...summary.entries()].map(([name, { qty, unit }]) => (
                 <div key={name} className="row">
                   <span>{name}</span>
-                  <b>× {qty}</b>
+                  <b>
+                    {qty} {unitShort(unit)}
+                  </b>
                 </div>
               ))}
             </div>
@@ -134,6 +138,7 @@ export default function KitchenOrders() {
                   <div key={i.id} className="cart-line">
                     <span className="grow">
                       {i.dish_name} × {i.qty}
+                      {i.unit === 'piece' ? ' шт' : ''}
                     </span>
                     <span className="price">{money(i.price_cents * i.qty)}</span>
                   </div>

@@ -16,6 +16,8 @@ export interface Settings {
   max_days_ahead: number
   timezone: string
   slots: Record<Slot, SlotConfig>
+  /** До котрої години приймаються замовлення «заздалегідь», 'HH:MM' або 'HH:MM:SS'. */
+  advance_cutoff_time?: string
 }
 
 export interface Profile {
@@ -39,6 +41,8 @@ export interface Chef {
   created_at: string
 }
 
+export type Unit = 'portion' | 'piece'
+
 export interface Dish {
   id: string
   chef_id: string
@@ -60,6 +64,10 @@ export interface Dish {
   storage_note: string | null
   slots: Slot[]
   daily_limit: number | null
+  /** portion — порція, piece — штука (торт, пиріг) */
+  unit: Unit
+  /** За скільки днів до видачі треба замовити; 0 — як звичайно. */
+  lead_days: number
   is_active: boolean
   is_hidden: boolean
   sort_order: number
@@ -73,6 +81,7 @@ export interface OrderItem {
   dish_name: string
   price_cents: number
   qty: number
+  unit?: Unit
 }
 
 export interface Order {

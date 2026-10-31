@@ -4,7 +4,7 @@ import { allergenLabel, TAGS } from '../lib/allergens'
 import { money, stars } from '../lib/format'
 import { Plate } from '../components/Brand'
 import { supabase } from '../lib/supabase'
-import { isSlotOpen } from '../lib/time'
+import { isDishOpen, leadLabel } from '../lib/time'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
 import type { Dish, Review } from '../types'
@@ -36,7 +36,7 @@ export default function DishPage() {
 
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
   const slotOk = cart.slot ? dish.slots.includes(cart.slot) : false
-  const open = cart.date && cart.slot ? isSlotOpen(settings, cart.date, cart.slot) : false
+  const open = cart.date && cart.slot ? isDishOpen(settings, dish, cart.date, cart.slot) : false
   const qty = cart.qtyOf(dish.id)
 
   return (
@@ -70,12 +70,12 @@ export default function DishPage() {
       <div className="facts">
         <div>
           <b>{money(dish.price_cents)}</b>
-          <span>ціна</span>
+          <span>{dish.unit === 'piece' ? 'за штуку' : 'ціна'}</span>
         </div>
         {(dish.weight_g || dish.volume_ml) && (
           <div>
             <b>{dish.weight_g ? `${dish.weight_g} г` : `${dish.volume_ml} мл`}</b>
-            <span>порція</span>
+            <span>{dish.unit === 'piece' ? 'штука' : 'порція'}</span>
           </div>
         )}
         {dish.kcal != null && (
@@ -104,6 +104,7 @@ export default function DishPage() {
         )}
       </div>
       {dish.portion_note && <p className="small muted">Порція: {dish.portion_note}</p>}
+      {dish.lead_days > 0 && <p className="notice">{leadLabel(settings, dish)}. Кухар готує її заздалегідь.</p>}
 
       {dish.ingredients.length > 0 && (
         <>
