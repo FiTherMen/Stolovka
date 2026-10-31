@@ -92,6 +92,11 @@ function Shell() {
         <NavLink to="/kitchen">
           {NavIcons.chef}Кухня{newOrders.total > 0 && <em className="badge-count">{newOrders.total}</em>}
         </NavLink>
+        {isAdmin && (
+          <NavLink to="/admin">
+            {NavIcons.admin}Адмінка
+          </NavLink>
+        )}
       </nav>
       <TelegramBackButton />
     </>

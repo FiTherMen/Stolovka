@@ -1,3 +1,4 @@
+import { confirmAction } from '../../lib/confirm'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { STATUS_LABELS, money, stars } from '../../lib/format'
@@ -5,11 +6,12 @@ import { errorText, supabase } from '../../lib/supabase'
 import { SLOTS, addDays, dateLabel, todayIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
-import type { Chef, ChefStatus, Order, Review, Settings } from '../../types'
+import type { Chef, ChefStatus, Order, Profile, Review, Settings } from '../../types'
 
-type Tab = 'chefs' | 'orders' | 'report' | 'reviews' | 'settings'
+type Tab = 'chefs' | 'people' | 'orders' | 'report' | 'reviews' | 'settings'
 const TABS: [Tab, string][] = [
   ['chefs', 'Кухарі'],
+  ['people', 'Люди'],
   ['orders', 'Замовлення'],
   ['report', 'Звіт'],
   ['reviews', 'Відгуки'],
@@ -41,10 +43,83 @@ export default function Admin() {
         ))}
       </div>
       {tab === 'chefs' && <ChefsTab />}
+      {tab === 'people' && <PeopleTab />}
       {tab === 'orders' && <OrdersTab />}
       {tab === 'report' && <ReportTab />}
       {tab === 'reviews' && <ReviewsTab />}
       {tab === 'settings' && <SettingsTab />}
+    </div>
+  )
+}
+
+const ROLE_LABELS: Record<Profile['role'], string> = { customer: 'клієнт', chef: 'кухар', admin: 'адміністратор' }
+
+/** Користувачі: тут адміністратор призначає інших адміністраторів без зміни налаштувань сервера. */
+function PeopleTab() {
+  const { session } = useAuth()
+  const [people, setPeople] = useState<Profile[]>([])
+  const [chefIds, setChefIds] = useState<Set<string>>(new Set())
+  const [query, setQuery] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    const [p, c] = await Promise.all([
+      supabase.from('profiles').select('*').order('full_name'),
+      supabase.from('chefs').select('id'),
+    ])
+    if (p.error) setError(errorText(p.error))
+    setPeople((p.data as Profile[]) ?? [])
+    setChefIds(new Set(((c.data as { id: string }[]) ?? []).map((x) => x.id)))
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const setAdmin = async (p: Profile, admin: boolean) => {
+    const name = p.full_name || (p.telegram_username ? '@' + p.telegram_username : 'користувача')
+    if (!confirmAction(admin ? `Зробити ${name} адміністратором?` : `Забрати в ${name} права адміністратора?`)) return
+    const role = admin ? 'admin' : chefIds.has(p.id) ? 'chef' : 'customer'
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', p.id)
+    if (error) setError(errorText(error))
+    void load()
+  }
+
+  const q = query.trim().toLowerCase().replace(/^@/, '')
+  const shown = people
+    .filter((p) => !q || [p.full_name, p.telegram_username, p.phone, p.telegram_id?.toString()].some((v) => v?.toLowerCase().includes(q)))
+    .sort((a, b) => Number(b.role === 'admin') - Number(a.role === 'admin'))
+
+  return (
+    <div>
+      <p className="small muted">
+        Адміністратор бачить «Адмінку» на сайті і в Telegram. Людина зʼявиться тут після першого входу в застосунок.
+      </p>
+      <input placeholder="Пошук: імʼя, @username, телефон" value={query} onChange={(e) => setQuery(e.target.value)} />
+      {error && <p className="error">{error}</p>}
+      {shown.map((p) => (
+        <div key={p.id} className="card row">
+          <div className="grow">
+            <b>{p.full_name || 'Без імені'}</b>
+            <div className="small muted">
+              {[p.telegram_username && '@' + p.telegram_username, p.telegram_id ? 'Telegram' : 'пошта', ROLE_LABELS[p.role]]
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
+          </div>
+          {p.role === 'admin' ? (
+            p.id !== session?.user.id && (
+              <button className="btn small ghost" onClick={() => setAdmin(p, false)}>
+                Забрати права
+              </button>
+            )
+          ) : (
+            <button className="btn small" onClick={() => setAdmin(p, true)}>
+              Зробити адміном
+            </button>
+          )}
+        </div>
+      ))}
     </div>
   )
 }
