@@ -41,6 +41,15 @@ export default function KitchenDishes() {
     void load()
   }
 
+  // Чому клієнт не бачить страву в меню (null — бачить).
+  const hiddenReason = (d: Dish): string | null => {
+    if (chef?.status === 'pending') return 'Клієнти не бачать: заявка кухаря ще чекає схвалення адміністратора'
+    if (chef && chef.status !== 'approved') return 'Клієнти не бачать: кабінет кухаря не активний'
+    if (!d.is_active) return 'Клієнти не бачать: страву вимкнено (перемикач праворуч)'
+    if (d.is_hidden) return 'Клієнти не бачать: приховано адміністратором'
+    return null
+  }
+
   return (
     <div>
       <div className="row">
@@ -65,7 +74,9 @@ export default function KitchenDishes() {
             <div className="small muted">
               {money(d.price_cents)} · {d.slots.map((s) => settings.slots[s].label.toLowerCase()).join(', ')}
               {d.daily_limit ? ` · ліміт ${d.daily_limit}/день` : ''}
-              {d.is_hidden ? ' · приховано адміністратором' : ''}
+            </div>
+            <div className={`small ${hiddenReason(d) ? 'warn-text' : 'ok-text'}`}>
+              {hiddenReason(d) ?? `Клієнти бачать у меню: ${d.slots.map((s) => settings.slots[s].label.toLowerCase()).join(', ')}`}
             </div>
           </div>
           <label className="switch" title={d.is_active ? 'У меню' : 'Вимкнено'}>

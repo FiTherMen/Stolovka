@@ -992,3 +992,6 @@ legend {
     overflow-x: visible;
   }
 }
+.ok-text {
+  color: var(--on-herb);
+}
