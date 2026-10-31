@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { STATUS_LABELS, money, stars } from '../../lib/format'
 import { errorText, supabase } from '../../lib/supabase'
-import { SLOTS, addDays, dateLabel, todayIn } from '../../lib/time'
+import { SLOTS, addDays, dateLabel, slotTitle, todayIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
 import type { Chef, ChefStatus, Order, Profile, Review, Settings } from '../../types'
@@ -218,7 +218,7 @@ function OrdersTab() {
         <div key={o.id} className={`card ${o.status === 'cancelled' ? 'dim' : ''}`}>
           <div className="row">
             <b>
-              №{o.number} · {settings.slots[o.slot].label} · кв. {o.apartment}
+              №{o.number} · {slotTitle(settings, o.slot)} · кв. {o.apartment}
             </b>
             <span className={`status status-${o.status}`}>{STATUS_LABELS[o.status]}</span>
           </div>

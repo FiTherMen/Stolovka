@@ -54,7 +54,7 @@ export function buildDemoDb(): DemoDb {
       name: 'Торт «Медовик»',
       photo_urls: [demoPhoto('#c98a3e', '#fbeed3', 6), demoPhoto('#a8642a', '#fff3dc', 4), demoPhoto('#e0a95a', '#f8e6c4', 8)],
       category: 'Десерти',
-      description: 'Цілий медовий торт зі сметанним кремом, 8 шматків. Печу за день до видачі.',
+      description: 'Цілий медовий торт зі сметанним кремом, 8 шматків. Печу під ваше свято: напишіть напис і побажання.',
       weight_g: 1200,
       volume_ml: null,
       portion_note: 'цілий торт, 8 шматків',
@@ -66,9 +66,9 @@ export function buildDemoDb(): DemoDb {
       allergens: ['gluten', 'eggs', 'milk'],
       tags: ['vegetarian'],
       price_cents: 2800,
-      slots: ['breakfast', 'lunch', 'dinner'],
+      slots: ['custom'],
       unit: 'piece',
-      lead_days: 1,
+      lead_days: 2,
       daily_limit: 3,
       sort_order: 20,
     },
@@ -160,15 +160,12 @@ export function buildDemoDb(): DemoDb {
 
   const cake = dishes.find((x) => x.id === 'dish-cake')!
   addOrder(
-    { customer_id: 'neighbour-e', apartment: '8', customer_name: 'Тетяна', phone: '+34 633 777 888', delivery_date: tomorrow, slot: 'dinner', status: 'accepted', comment: 'Напис «З днем народження, Марко»' },
+    { customer_id: 'neighbour-e', apartment: '8', customer_name: 'Тетяна', phone: '+34 633 777 888', delivery_date: tomorrow, slot: 'custom', desired_time: '18:00', status: 'accepted', comment: 'Напис «З днем народження, Марко»' },
     [[cake, 1]],
   )
   addOrder(
-    { customer_id: 'neighbour-f', apartment: '3', customer_name: 'Петро', delivery_date: tomorrow, slot: 'lunch', status: 'accepted' },
-    [
-      [d(1), 1],
-      [cake, 1],
-    ],
+    { customer_id: 'neighbour-f', apartment: '3', customer_name: 'Петро', delivery_date: addDays(today, 4), slot: 'custom', desired_time: null, status: 'new', comment: 'Без горіхів, будь ласка' },
+    [[cake, 1]],
   )
 
   // Сьогоднішні замовлення для кухні.
@@ -204,8 +201,8 @@ export function buildDemoDb(): DemoDb {
       { id: PENDING_CHEF, full_name: 'Марко', role: 'chef', telegram_id: null },
     ],
     chefs: [
-      { id: DEMO_USERS.chef, display_name: 'Кухня Оксани', bio: 'Готую українські страви вдома, як для своєї родини.', phone: '+34 600 987 654', photo_url: null, status: 'approved', created_at: now },
-      { id: PENDING_CHEF, display_name: 'Плов від Марка', bio: 'Узбецька кухня, плов на замовлення.', phone: '+34 633 000 111', photo_url: null, status: 'pending', created_at: now },
+      { id: DEMO_USERS.chef, display_name: 'Кухня Оксани', bio: 'Готую українські страви вдома, як для своєї родини.', phone: '+34 600 987 654', photo_url: null, slug: 'kukhnia-oksany', status: 'approved', created_at: now },
+      { id: PENDING_CHEF, display_name: 'Плов від Марка', bio: 'Узбецька кухня, плов на замовлення.', phone: '+34 633 000 111', photo_url: null, slug: 'plov-vid-marka', status: 'pending', created_at: now },
     ],
     chef_telegram: [
       { chef_id: DEMO_USERS.chef, chat_id: 1, link_token: 'demo-token-1' },

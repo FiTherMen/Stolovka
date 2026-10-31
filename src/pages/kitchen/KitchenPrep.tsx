@@ -2,16 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { unitShort } from '../../lib/format'
 import { errorText, supabase } from '../../lib/supabase'
-import { SLOTS, addDays, dateLabel, todayIn } from '../../lib/time'
+import { ORDER_SLOTS, addDays, dateLabel, slotTitle, slotWindow, todayIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
-import type { Order, Slot } from '../../types'
+import type { Order, OrderSlot } from '../../types'
 
 interface Line {
   name: string
   unit: string
   total: number
-  bySlot: Partial<Record<Slot, number>>
+  bySlot: Partial<Record<OrderSlot, number>>
 }
 
 /** «Що готувати»: усе, що треба приготувати на обраний день (за замовчуванням завтра), разом і по квартирах. */
@@ -47,7 +47,12 @@ export default function KitchenPrep() {
     orders.forEach((o) =>
       o.order_items.forEach((i) => {
         const key = i.dish_id ?? i.dish_name
-        const line = map.get(key) ?? { name: i.dish_name, unit: i.unit ?? 'portion', total: 0, bySlot: {} }
+        const line = map.get(key) ?? {
+          name: i.dish_name,
+          unit: i.unit ?? 'portion',
+          total: 0,
+          bySlot: {},
+        }
         line.total += i.qty
         line.bySlot[o.slot] = (line.bySlot[o.slot] ?? 0) + i.qty
         map.set(key, line)
@@ -59,7 +64,8 @@ export default function KitchenPrep() {
 
   const notAccepted = orders.filter((o) => o.status === 'new').length
   const dates = [0, 1, 2, 3, 4, 5, 6, 7].map((n) => addDays(today, n))
-  const slotLabel = (s: Slot) => settings.slots[s].label.toLowerCase()
+  if (!dates.includes(date)) dates.push(date)
+  const slotLabel = (s: OrderSlot) => slotTitle(settings, s).toLowerCase()
 
   return (
     <div>
@@ -70,8 +76,13 @@ export default function KitchenPrep() {
           </button>
         ))}
       </div>
+      <label className="inline-date small muted">
+        Інша дата: <input type="date" value={date} min={today} onChange={(e) => e.target.value && setDate(e.target.value)} />
+      </label>
       {error && <p className="error">{error}</p>}
-      {loaded && orders.length === 0 && <p className="muted">На {dateLabel(date, settings.timezone).toLowerCase()} замовлень поки немає.</p>}
+      {loaded && orders.length === 0 && (
+        <p className="muted">На {dateLabel(date, settings.timezone).toLowerCase()} замовлень поки немає.</p>
+      )}
 
       {lines.length > 0 && (
         <>
@@ -92,7 +103,7 @@ export default function KitchenPrep() {
                   </b>
                 </div>
                 <div className="small muted">
-                  {SLOTS.filter((s) => l.bySlot[s])
+                  {ORDER_SLOTS.filter((s) => l.bySlot[s])
                     .map((s) => `${slotLabel(s)} ${l.bySlot[s]}`)
                     .join(' · ')}
                 </div>
@@ -106,21 +117,21 @@ export default function KitchenPrep() {
           )}
 
           <h2 className="section-title">По квартирах</h2>
-          {SLOTS.map((slot) => {
+          {ORDER_SLOTS.map((slot) => {
             const list = orders.filter((o) => o.slot === slot)
             if (list.length === 0) return null
-            const cfg = settings.slots[slot]
             return (
               <section key={slot}>
                 <h3 className="small-title">
-                  {cfg.label} · {cfg.window_start}–{cfg.window_end}
+                  {slotTitle(settings, slot)}
+                  {slot !== 'custom' && ` · ${slotWindow(settings, slot)}`}
                 </h3>
                 {list.map((o) => (
                   <div key={o.id} className="card prep-order">
                     <div className="row">
                       <b>{o.fulfillment === 'pickup' ? 'Самовивіз' : `Кв. ${o.apartment}`}</b>
                       <span className="small muted">
-                        №{o.number} · {o.customer_name}
+                        {o.slot === 'custom' && `${slotWindow(settings, o.slot, o.desired_time)} · `}№{o.number} · {o.customer_name}
                       </span>
                     </div>
                     {o.order_items.map((i) => (

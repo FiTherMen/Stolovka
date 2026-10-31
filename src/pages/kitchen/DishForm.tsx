@@ -7,7 +7,7 @@ import { errorText, supabase } from '../../lib/supabase'
 import { SLOTS, advanceTime } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
-import type { Dish, Slot, Unit } from '../../types'
+import type { Dish, OrderSlot, Slot, Unit } from '../../types'
 
 interface FormState {
   name: string
@@ -29,6 +29,7 @@ interface FormState {
   daily_limit: string
   unit: Unit
   lead_days: number
+  custom: boolean
   photo_urls: string[]
   is_active: boolean
 }
@@ -53,6 +54,7 @@ const EMPTY: FormState = {
   daily_limit: '',
   unit: 'portion',
   lead_days: 0,
+  custom: false,
   photo_urls: [],
   is_active: true,
 }
@@ -107,7 +109,8 @@ export default function DishForm() {
           allergens: d.allergens,
           tags: d.tags,
           storage_note: d.storage_note ?? '',
-          slots: d.slots,
+          slots: d.slots.filter((x): x is Slot => x !== 'custom').length ? d.slots.filter((x): x is Slot => x !== 'custom') : EMPTY.slots,
+          custom: d.slots.includes('custom'),
           daily_limit: str(d.daily_limit),
           unit: d.unit ?? 'portion',
           lead_days: d.lead_days ?? 0,
@@ -133,7 +136,10 @@ export default function DishForm() {
         if (error) throw error
         urls.push(supabase.storage.from('dish-photos').getPublicUrl(path).data.publicUrl)
       }
-      setF((s) => ({ ...s, photo_urls: [...s.photo_urls, ...urls].slice(0, MAX_PHOTOS) }))
+      setF((s) => ({
+        ...s,
+        photo_urls: [...s.photo_urls, ...urls].slice(0, MAX_PHOTOS),
+      }))
     } catch (e) {
       setError(errorText(e))
     }
@@ -143,7 +149,7 @@ export default function DishForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!chef) return
-    if (f.slots.length === 0) return setError('Оберіть хоча б одне вікно: сніданок, обід або вечеря')
+    if (!f.custom && f.slots.length === 0) return setError('Оберіть хоча б одне вікно: сніданок, обід або вечеря')
     setBusy(true)
     setError(null)
     const row = {
@@ -166,10 +172,10 @@ export default function DishForm() {
       allergens: f.allergens,
       tags: f.tags,
       storage_note: f.storage_note.trim() || null,
-      slots: f.slots,
+      slots: f.custom ? (['custom'] as OrderSlot[]) : f.slots,
       daily_limit: num(f.daily_limit),
       unit: f.unit,
-      lead_days: f.lead_days,
+      lead_days: f.custom ? Math.max(1, f.lead_days) : f.lead_days,
       photo_urls: f.photo_urls,
       is_active: f.is_active,
     }
@@ -194,14 +200,29 @@ export default function DishForm() {
         {f.photo_urls.map((u, i) => (
           <div key={u} className="photo">
             <img src={u} alt="" />
-            <button type="button" className="photo-remove" onClick={() => set('photo_urls', f.photo_urls.filter((x) => x !== u))} aria-label="Прибрати фото">
+            <button
+              type="button"
+              className="photo-remove"
+              onClick={() =>
+                set(
+                  'photo_urls',
+                  f.photo_urls.filter((x) => x !== u),
+                )
+              }
+              aria-label="Прибрати фото"
+            >
               ×
             </button>
             {i === 0 ? (
               <span className="photo-cover">обкладинка</span>
             ) : (
               <div className="photo-tools">
-                <button type="button" onClick={() => set('photo_urls', moveTo(f.photo_urls, i, i - 1))} aria-label="Посунути ліворуч" title="Посунути ліворуч">
+                <button
+                  type="button"
+                  onClick={() => set('photo_urls', moveTo(f.photo_urls, i, i - 1))}
+                  aria-label="Посунути ліворуч"
+                  title="Посунути ліворуч"
+                >
                   ‹
                 </button>
                 <button type="button" onClick={() => set('photo_urls', moveTo(f.photo_urls, i, 0))} title="Зробити обкладинкою">
@@ -218,7 +239,10 @@ export default function DishForm() {
           </label>
         )}
       </div>
-      <p className="small muted">До {MAX_PHOTOS} фото. Перше фото (обкладинка) показується в меню, решта в галереї страви. ★ робить фото обкладинкою, ‹ посуває ліворуч.</p>
+      <p className="small muted">
+        До {MAX_PHOTOS} фото. Перше фото (обкладинка) показується в меню, решта в галереї страви. ★ робить фото обкладинкою, ‹ посуває
+        ліворуч.
+      </p>
 
       <label>
         Назва*
@@ -241,7 +265,13 @@ export default function DishForm() {
       <div className="grid2">
         <label>
           Ціна, €*
-          <input value={f.price} onChange={(e) => set('price', e.target.value)} inputMode="decimal" required pattern="[0-9]+([.,][0-9]{1,2})?" />
+          <input
+            value={f.price}
+            onChange={(e) => set('price', e.target.value)}
+            inputMode="decimal"
+            required
+            pattern="[0-9]+([.,][0-9]{1,2})?"
+          />
         </label>
         <label>
           {f.unit === 'piece' ? 'Ліміт штук на день' : 'Ліміт порцій на день'}
@@ -258,7 +288,11 @@ export default function DishForm() {
       </div>
       <label>
         Що входить у порцію
-        <input value={f.portion_note} onChange={(e) => set('portion_note', e.target.value)} placeholder="борщ 350 г, сметана 20 г, пампушка 50 г" />
+        <input
+          value={f.portion_note}
+          onChange={(e) => set('portion_note', e.target.value)}
+          placeholder="борщ 350 г, сметана 20 г, пампушка 50 г"
+        />
       </label>
 
       <fieldset>
@@ -308,7 +342,12 @@ export default function DishForm() {
         <legend>Мітки</legend>
         <div className="chips wrap">
           {Object.entries(TAGS).map(([key, label]) => (
-            <button type="button" key={key} className={`chip ${f.tags.includes(key) ? 'active' : ''}`} onClick={() => set('tags', toggleIn(f.tags, key))}>
+            <button
+              type="button"
+              key={key}
+              className={`chip ${f.tags.includes(key) ? 'active' : ''}`}
+              onClick={() => set('tags', toggleIn(f.tags, key))}
+            >
               {label}
             </button>
           ))}
@@ -325,27 +364,71 @@ export default function DishForm() {
             Поштучно (торт, пиріг)
           </button>
         </div>
-        <label>
-          Коли треба замовити
-          <select value={f.lead_days} onChange={(e) => set('lead_days', Number(e.target.value))}>
-            <option value={0}>Як звичайно, до дедлайну вікна</option>
-            <option value={1}>Заздалегідь: до {advanceTime(settings)} напередодні</option>
-            <option value={2}>Заздалегідь: за 2 дні</option>
-            <option value={3}>Заздалегідь: за 3 дні</option>
-          </select>
-        </label>
+        <div className="segmented">
+          <button type="button" className={!f.custom ? 'active' : ''} onClick={() => set('custom', false)}>
+            За графіком
+          </button>
+          <button
+            type="button"
+            className={f.custom ? 'active' : ''}
+            onClick={() =>
+              setF((x) => ({
+                ...x,
+                custom: true,
+                lead_days: Math.max(1, x.lead_days),
+              }))
+            }
+          >
+            Під замовлення
+          </button>
+        </div>
+        {f.custom ? (
+          <>
+            <p className="small muted">
+              Страва не привʼязана до сніданку, обіду чи вечері. Клієнт сам обирає дату і бажаний час, а в коментарі пише побажання (напр.
+              напис на торті). Вона показується в меню в розділі «Під замовлення».
+            </p>
+            <label>
+              Мінімум днів до видачі
+              <select value={f.lead_days} onChange={(e) => set('lead_days', Number(e.target.value))}>
+                {[1, 2, 3, 5, 7].map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? `1 день (до ${advanceTime(settings)} напередодні)` : `${n} ${n < 5 ? 'дні' : 'днів'}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        ) : (
+          <label>
+            Коли треба замовити
+            <select value={f.lead_days} onChange={(e) => set('lead_days', Number(e.target.value))}>
+              <option value={0}>Як звичайно, до дедлайну вікна</option>
+              <option value={1}>Заздалегідь: до {advanceTime(settings)} напередодні</option>
+              <option value={2}>Заздалегідь: за 2 дні</option>
+              <option value={3}>Заздалегідь: за 3 дні</option>
+            </select>
+          </label>
+        )}
       </fieldset>
 
-      <fieldset>
-        <legend>Коли готуєте</legend>
-        <div className="chips wrap">
-          {SLOTS.map((s) => (
-            <button type="button" key={s} className={`chip ${f.slots.includes(s) ? 'active' : ''}`} onClick={() => set('slots', toggleIn(f.slots, s))}>
-              {settings.slots[s].label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {!f.custom && (
+        <fieldset>
+          <legend>Коли готуєте</legend>
+          <div className="chips wrap">
+            {SLOTS.map((s) => (
+              <button
+                type="button"
+                key={s}
+                className={`chip ${f.slots.includes(s) ? 'active' : ''}`}
+                onClick={() => set('slots', toggleIn(f.slots, s))}
+              >
+                {settings.slots[s].label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <label>
         Зберігання

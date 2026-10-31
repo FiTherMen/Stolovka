@@ -6,6 +6,7 @@ import { Plate } from '../../components/Brand'
 import { errorText, supabase } from '../../lib/supabase'
 import { useAuth } from '../../state/auth'
 import { useSettings } from '../../state/settings'
+import { customLeadLabel, isCustomDish, slotTitle } from '../../lib/time'
 import { confirmAction } from '../../lib/confirm'
 import type { Dish } from '../../types'
 
@@ -41,6 +42,9 @@ export default function KitchenDishes() {
     void load()
   }
 
+  const slotsText = (d: Dish) =>
+    isCustomDish(d) ? customLeadLabel(d).toLowerCase() : d.slots.map((s) => slotTitle(settings, s).toLowerCase()).join(', ')
+
   // Чому клієнт не бачить страву в меню (null — бачить).
   const hiddenReason = (d: Dish): string | null => {
     if (chef?.status === 'pending') return 'Клієнти не бачать: заявка кухаря ще чекає схвалення адміністратора'
@@ -72,11 +76,11 @@ export default function KitchenDishes() {
               <b>{d.name}</b>
             </Link>
             <div className="small muted">
-              {money(d.price_cents)} · {d.slots.map((s) => settings.slots[s].label.toLowerCase()).join(', ')}
+              {money(d.price_cents)} · {slotsText(d)}
               {d.daily_limit ? ` · ліміт ${d.daily_limit}/день` : ''}
             </div>
             <div className={`small ${hiddenReason(d) ? 'warn-text' : 'ok-text'}`}>
-              {hiddenReason(d) ?? `Клієнти бачать у меню: ${d.slots.map((s) => settings.slots[s].label.toLowerCase()).join(', ')}`}
+              {hiddenReason(d) ?? `Клієнти бачать у меню: ${slotsText(d)}`}
             </div>
           </div>
           <label className="switch" title={d.is_active ? 'У меню' : 'Вимкнено'}>

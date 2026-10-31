@@ -3,7 +3,7 @@
  * обробники /api/*, що й Cloudflare Pages Functions у папці functions/.
  * Змінні середовища ті самі, що описані в .dev.vars.example.
  */
-import { createReadStream, existsSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { extname, join, normalize, resolve } from 'node:path'
 import { Readable } from 'node:stream'
@@ -63,6 +63,53 @@ async function sendResponse(res: ServerResponse, response: Response) {
   res.end(Buffer.from(await response.arrayBuffer()))
 }
 
+const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const ogCache = new Map<string, { at: number; meta: { title: string; description: string; image: string | null } | null }>()
+
+/** Дані кухаря для превʼю посилання /chef/<slug> (лише схвалені, через публічний ключ і RLS). */
+async function chefMeta(slug: string) {
+  const hit = ogCache.get(slug)
+  if (hit && Date.now() - hit.at < 5 * 60_000) return hit.meta
+  let meta = null
+  try {
+    const r = await fetch(`${env.SUPABASE_URL}/rest/v1/chefs?slug=eq.${encodeURIComponent(slug)}&select=display_name,bio,photo_url`, {
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${env.SUPABASE_ANON_KEY}` },
+    })
+    const [chef] = r.ok ? ((await r.json()) as { display_name: string; bio: string | null; photo_url: string | null }[]) : []
+    if (chef) {
+      meta = {
+        title: `${chef.display_name} · Тарілка`,
+        description: (chef.bio || 'Домашня їжа на замовлення: сніданки, обіди, вечері й торти.').slice(0, 200),
+        image: chef.photo_url,
+      }
+    }
+  } catch (e) {
+    console.error('chefMeta', e)
+  }
+  ogCache.set(slug, { at: Date.now(), meta })
+  return meta
+}
+
+/** index.html з тегами Open Graph кухаря, щоб посилання гарно виглядало в Telegram і WhatsApp. */
+async function serveChefPage(slug: string, req: IncomingMessage, res: ServerResponse) {
+  const html = readFileSync(join(STATIC_DIR, 'index.html'), 'utf8')
+  const meta = env.SUPABASE_URL && env.SUPABASE_ANON_KEY ? await chefMeta(slug) : null
+  const origin = (env.PUBLIC_APP_URL || `${(req.headers['x-forwarded-proto'] as string) || 'https'}://${req.headers.host}`).replace(/\/$/, '')
+  let out = html
+  if (meta) {
+    out = out
+      .replace(/<title>[^<]*<\/title>/, `<title>${esc(meta.title)}</title>`)
+      .replace(/(<meta property="og:title" content=")[^"]*"/, `$1${esc(meta.title)}"`)
+      .replace(/(<meta property="og:description" content=")[^"]*"/, `$1${esc(meta.description)}"`)
+      .replace(/(<meta name="description" content=")[^"]*"/, `$1${esc(meta.description)}"`)
+  }
+  out = out
+    .replace(/(<meta property="og:image" content=")[^"]*"/, `$1${esc(meta?.image || `${origin}/icon-512.png`)}"`)
+    .replace('<meta property="og:type"', `<meta property="og:url" content="${esc(`${origin}/chef/${slug}`)}" />\n    <meta property="og:type"`)
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' })
+  res.end(out)
+}
+
 function serveStatic(pathname: string, res: ServerResponse) {
   const safe = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '')
   let file = join(STATIC_DIR, safe)
@@ -89,6 +136,8 @@ createServer(async (req, res) => {
       await sendResponse(res, await handler({ request: toRequest(req), env }))
       return
     }
+    const chefMatch = /^\/chef\/([a-z0-9-]{3,40})\/?$/.exec(pathname)
+    if (chefMatch) return await serveChefPage(chefMatch[1], req, res)
     serveStatic(pathname, res)
   } catch (e) {
     console.error(e)

@@ -7,6 +7,8 @@ import { money } from './lib/format'
 import { isConfigured } from './lib/supabase'
 import { inTelegram, tg } from './lib/telegram'
 import Admin from './pages/admin/Admin'
+import ChefPage from './pages/ChefPage'
+import { slugFromStartParam } from './lib/share'
 import Cart from './pages/Cart'
 import DishPage from './pages/DishPage'
 import Kitchen from './pages/kitchen/Kitchen'
@@ -31,6 +33,16 @@ function TelegramBackButton() {
     back.onClick(onClick)
     return () => back.offClick(onClick)
   }, [location.pathname, navigate])
+  return null
+}
+
+/** Відкриття Mini App за посиланням t.me/<бот>?startapp=chef_<slug> веде на сторінку кухаря. */
+function StartParamRedirect() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const slug = slugFromStartParam(tg?.initDataUnsafe.start_param)
+    if (slug) navigate(`/chef/${slug}`, { replace: true })
+  }, [navigate])
   return null
 }
 
@@ -63,6 +75,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Menu />} />
           <Route path="/dish/:id" element={<DishPage />} />
+          <Route path="/chef/:slug" element={<ChefPage />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/login" element={<Login />} />
@@ -86,19 +99,14 @@ function Shell() {
         <NavLink to="/cart">
           {NavIcons.cart}Кошик{cart.count > 0 && <em className="badge-count">{cart.count}</em>}
         </NavLink>
-        <NavLink to="/orders">
-          {NavIcons.orders}Замовлення
-        </NavLink>
+        <NavLink to="/orders">{NavIcons.orders}Замовлення</NavLink>
         <NavLink to="/kitchen">
           {NavIcons.chef}Кухня{newOrders.total > 0 && <em className="badge-count">{newOrders.total}</em>}
         </NavLink>
-        {isAdmin && (
-          <NavLink to="/admin">
-            {NavIcons.admin}Адмінка
-          </NavLink>
-        )}
+        {isAdmin && <NavLink to="/admin">{NavIcons.admin}Адмінка</NavLink>}
       </nav>
       <TelegramBackButton />
+      <StartParamRedirect />
     </>
   )
 }

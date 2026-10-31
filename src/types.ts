@@ -1,4 +1,6 @@
 export type Slot = 'breakfast' | 'lunch' | 'dinner'
+/** custom — страва «під замовлення» на будь-яку дату, поза графіком. */
+export type OrderSlot = Slot | 'custom'
 export type OrderStatus = 'new' | 'accepted' | 'cooking' | 'ready' | 'delivered' | 'cancelled'
 export type ChefStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
 
@@ -37,6 +39,7 @@ export interface Chef {
   bio: string | null
   photo_url: string | null
   phone: string | null
+  slug: string
   status: ChefStatus
   created_at: string
 }
@@ -62,7 +65,7 @@ export interface Dish {
   allergens: string[]
   tags: string[]
   storage_note: string | null
-  slots: Slot[]
+  slots: OrderSlot[]
   daily_limit: number | null
   /** portion — порція, piece — штука (торт, пиріг) */
   unit: Unit
@@ -71,7 +74,7 @@ export interface Dish {
   is_active: boolean
   is_hidden: boolean
   sort_order: number
-  chefs?: { display_name: string } | null
+  chefs?: { display_name: string; slug?: string } | null
 }
 
 export interface OrderItem {
@@ -95,7 +98,8 @@ export interface Order {
   phone: string | null
   comment: string | null
   delivery_date: string
-  slot: Slot
+  slot: OrderSlot
+  desired_time?: string | null
   fulfillment: 'delivery' | 'pickup'
   status: OrderStatus
   paid: boolean

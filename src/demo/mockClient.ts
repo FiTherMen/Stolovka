@@ -2,11 +2,11 @@
  * Демо-замінник клієнта Supabase: зберігає дані в памʼяті браузера (і в localStorage),
  * підтримує лише ті запити, які робить застосунок. Логіка RPC повторює функції з міграції.
  */
-import { DEFAULT_SETTINGS, isDishOpen, isSlotOpen, todayIn } from '../lib/time'
-import type { Settings, Slot } from '../types'
+import { DEFAULT_SETTINGS, customMinDate, isDishOpen, isSlotOpen, todayIn } from '../lib/time'
+import type { OrderSlot, Settings, Slot } from '../types'
 import { DEMO_USERS, buildDemoDb, type DemoDb, type Row } from './demoData'
 
-const KEY = 'stolovka.demo.v2'
+const KEY = 'stolovka.demo.v3'
 type Result = { data: unknown; error: { message: string } | null; count?: number }
 
 let db: DemoDb = load()
@@ -263,15 +263,19 @@ const RPC: Record<string, (args: Row) => Result> = {
     if (!items.length) return fail('Кошик порожній')
     const s = settings()
     const date = a.p_date as string
-    const slot = a.p_slot as Slot
-    if (!isSlotOpen(s, date, slot)) return fail('Замовлення на це вікно вже закрите')
+    const slot = a.p_slot as OrderSlot
+    const custom = slot === 'custom'
+    if (!custom && !isSlotOpen(s, date, slot)) return fail('Замовлення на це вікно вже закрите')
     const cart: { dish: Row; qty: number }[] = []
     for (const it of items) {
       const dish = db.dishes.find((d) => d.id === it.dish_id)
       const chef = dish && db.chefs.find((c) => c.id === dish.chef_id)
       if (!dish || !dish.is_active || dish.is_hidden || chef?.status !== 'approved') return fail('Страва недоступна, оновіть меню')
-      if (!(dish.slots as Slot[]).includes(slot)) return fail(`Страву «${dish.name}» не готують на це вікно`)
-      if (!isDishOpen(s, dish as { lead_days: number }, date, slot)) {
+      if (!(dish.slots as OrderSlot[]).includes(slot)) return fail(`Страву «${dish.name}» не готують на це вікно`)
+      if (custom && date < customMinDate(s, dish as { lead_days: number })) {
+        return fail(`Страву «${dish.name}» треба замовляти за ${dish.lead_days} дн. наперед. Оберіть пізнішу дату.`)
+      }
+      if (!custom && !isDishOpen(s, dish as { lead_days: number }, date, slot as Slot)) {
         return fail(`Страву «${dish.name}» треба замовляти за ${dish.lead_days} дн. наперед. Оберіть пізнішу дату.`)
       }
       if (dish.daily_limit != null && dishSold(dish.id as string, date) + it.qty > (dish.daily_limit as number)) {
@@ -296,6 +300,7 @@ const RPC: Record<string, (args: Row) => Result> = {
         comment: (a.p_comment as string) || null,
         delivery_date: date,
         slot,
+        desired_time: (a.p_desired_time as string) || null,
         fulfillment: a.p_fulfillment ?? 'delivery',
         status: 'new',
         payment_method: 'cash',

@@ -16,12 +16,13 @@ interface PrepOrder {
   customer_name: string
   comment: string | null
   slot: string
+  desired_time: string | null
   status: string
   fulfillment: string
   order_items: { dish_id: string | null; dish_name: string; qty: number; unit: string | null }[]
 }
 
-const SLOT_ORDER = ['breakfast', 'lunch', 'dinner']
+const SLOT_ORDER = ['breakfast', 'lunch', 'dinner', 'custom']
 const unitShort = (u: string | null) => (u === 'piece' ? 'шт' : 'порц.')
 
 /** Дата 'YYYY-MM-DD' + n днів. */
@@ -57,18 +58,18 @@ export function prepText(date: string, orders: PrepOrder[], slots: Record<string
   for (const slot of SLOT_ORDER) {
     const list = orders.filter((o) => o.slot === slot)
     if (!list.length) continue
-    const s = slots[slot]
-    lines.push('', `<b>${escapeHtml(s?.label ?? slot)}${s ? ` ${s.window_start}–${s.window_end}` : ''}:</b>`)
+    const s = slot === 'custom' ? undefined : slots[slot]
+    lines.push('', `<b>${slot === 'custom' ? '🎂 Під замовлення' : escapeHtml(s?.label ?? slot)}${s ? ` ${s.window_start}–${s.window_end}` : ''}:</b>`)
     list.forEach((o) => {
       const where = o.fulfillment === 'pickup' ? 'самовивіз' : `кв. ${escapeHtml(o.apartment)}`
       const what = o.order_items.map((i) => `${escapeHtml(i.dish_name)} ${i.qty}${i.unit === 'piece' ? ' шт' : ''}`).join(', ')
-      lines.push(`🏠 ${where}: ${what}${o.comment ? `\n   💬 ${escapeHtml(o.comment)}` : ''}`)
+      lines.push(`🏠 ${where}${o.slot === 'custom' ? ` (${o.desired_time ? `на ${escapeHtml(o.desired_time)}` : 'час узгодити'})` : ''}: ${what}${o.comment ? `\n   💬 ${escapeHtml(o.comment)}` : ''}`)
     })
   }
 
   const notAccepted = orders.filter((o) => o.status === 'new').length
   if (notAccepted) lines.push('', `⚠️ Ще не прийнято: ${notAccepted}. Прийміть їх у кухні.`)
-  const stillOpen = SLOT_ORDER.filter((k) => slots[k] && !slots[k].cutoff_days_before)
+  const stillOpen = SLOT_ORDER.filter((k) => k !== 'custom' && slots[k] && !slots[k].cutoff_days_before)
   if (stillOpen.length) {
     lines.push('', `Список може доповнитися: ${stillOpen.map((k) => `${slots[k].label.toLowerCase()} до ${slots[k].cutoff_time}`).join(', ')} того ж дня.`)
   }
@@ -84,20 +85,41 @@ export async function sendPrepSummaries(db: SupabaseClient, botToken: string, ba
 
   const { data } = await db
     .from('orders')
-    .select('number, chef_id, apartment, customer_name, comment, slot, status, fulfillment, order_items(dish_id, dish_name, qty, unit)')
+    .select('number, chef_id, apartment, customer_name, comment, slot, desired_time, status, fulfillment, order_items(dish_id, dish_name, qty, unit)')
     .eq('delivery_date', day)
     .neq('status', 'cancelled')
     .order('created_at')
   const orders = (data ?? []) as PrepOrder[]
-  if (!orders.length) return { date: day, sent: 0 }
 
-  const chefIds = [...new Set(orders.map((o) => o.chef_id))]
+  // Наступні 7 днів «під замовлення»: торти печуть заздалегідь, тож нагадуємо наперед.
+  const { data: ahead } = await db
+    .from('orders')
+    .select('chef_id, delivery_date, order_items(dish_name, qty, unit)')
+    .eq('slot', 'custom')
+    .gt('delivery_date', day)
+    .lte('delivery_date', addDays(day, 7))
+    .neq('status', 'cancelled')
+    .order('delivery_date')
+  const upcoming = (ahead ?? []) as { chef_id: string; delivery_date: string; order_items: PrepOrder['order_items'] }[]
+  if (!orders.length && !upcoming.length) return { date: day, sent: 0 }
+
+  const chefIds = [...new Set([...orders, ...upcoming].map((o) => o.chef_id))]
   const { data: chats } = await db.from('chef_telegram').select('chef_id, chat_id').in('chef_id', chefIds)
   let sent = 0
   for (const c of chats ?? []) {
     if (!c.chat_id) continue
     const mine = orders.filter((o) => o.chef_id === c.chef_id)
-    const r = await sendMessage(botToken, c.chat_id as number, prepText(day, mine, slots), baseUrl ? { text: 'Що готувати', url: `${baseUrl}/kitchen/prep` } : undefined)
+    const later = upcoming.filter((o) => o.chef_id === c.chef_id)
+    const parts = [mine.length ? prepText(day, mine, slots) : `🍯 <b>Що готувати · ${dayTitle(day)}</b>\n\nЗамовлень на цей день немає.`]
+    if (later.length) {
+      parts.push(
+        '<b>🎂 Попереду під замовлення:</b>\n' +
+          later
+            .map((o) => `• ${dayTitle(o.delivery_date)}: ${o.order_items.map((i) => `${escapeHtml(i.dish_name)} ${i.qty} ${unitShort(i.unit)}`).join(', ')}`)
+            .join('\n'),
+      )
+    }
+    const r = await sendMessage(botToken, c.chat_id as number, parts.join('\n\n'), baseUrl ? { text: 'Що готувати', url: `${baseUrl}/kitchen/prep` } : undefined)
     if (r.ok) sent++
   }
   return { date: day, sent }

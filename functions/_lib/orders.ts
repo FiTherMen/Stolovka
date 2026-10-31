@@ -25,6 +25,7 @@ export interface OrderRow {
   status: string
   total_cents: number
   notified_at: string | null
+  desired_time?: string | null
   order_items: { dish_name: string; qty: number; price_cents: number }[]
   chefs: { display_name: string } | null
 }
@@ -45,6 +46,7 @@ const money = (cents: number) => `${(cents / 100).toFixed(2).replace('.', ',')} 
 export function whenText(order: OrderRow, slots: Record<string, SlotCfg>) {
   const s = slots[order.slot]
   const [, m, d] = order.delivery_date.split('-')
+  if (order.slot === 'custom') return `Під замовлення, ${d}.${m}${order.desired_time ? `, на ${order.desired_time}` : ', час узгодити'}`
   return `${s?.label ?? order.slot}, ${d}.${m}${s ? ` (${s.window_start}–${s.window_end})` : ''}`
 }
 

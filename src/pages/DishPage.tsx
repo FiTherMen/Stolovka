@@ -4,7 +4,8 @@ import { allergenLabel, TAGS } from '../lib/allergens'
 import { money, stars } from '../lib/format'
 import Gallery from '../components/Gallery'
 import { supabase } from '../lib/supabase'
-import { isDishOpen, leadLabel } from '../lib/time'
+import { isCustomDish, isDishOpen, leadLabel } from '../lib/time'
+import CustomOrderForm from '../components/CustomOrderForm'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
 import type { Dish, Review } from '../types'
@@ -21,7 +22,7 @@ export default function DishPage() {
     if (!id) return
     ;(async () => {
       const [d, r] = await Promise.all([
-        supabase.from('dishes').select('*, chefs(display_name)').eq('id', id).maybeSingle(),
+        supabase.from('dishes').select('*, chefs(display_name, slug)').eq('id', id).maybeSingle(),
         supabase.from('reviews').select('*').eq('dish_id', id).eq('is_hidden', false).order('created_at', { ascending: false }),
       ])
       setDish(d.data as Dish | null)
@@ -31,7 +32,12 @@ export default function DishPage() {
   }, [id])
 
   if (loading) return <div className="page muted">Завантаження…</div>
-  if (!dish) return <div className="page">Страву не знайдено. <Link to="/">До меню</Link></div>
+  if (!dish)
+    return (
+      <div className="page">
+        Страву не знайдено. <Link to="/">До меню</Link>
+      </div>
+    )
 
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
   const slotOk = cart.slot ? dish.slots.includes(cart.slot) : false
@@ -45,7 +51,7 @@ export default function DishPage() {
       {dish.category && <div className="eyebrow">{dish.category}</div>}
       <h1>{dish.name}</h1>
       <p className="muted">
-        Кухар: {dish.chefs?.display_name}
+        Кухар: {dish.chefs?.slug ? <Link to={`/chef/${dish.chefs.slug}`}>{dish.chefs.display_name}</Link> : dish.chefs?.display_name}
         {reviews.length > 0 && (
           <>
             {' · '}
@@ -92,7 +98,7 @@ export default function DishPage() {
         )}
       </div>
       {dish.portion_note && <p className="small muted">Порція: {dish.portion_note}</p>}
-      {dish.lead_days > 0 && <p className="notice">{leadLabel(settings, dish)}. Кухар готує її заздалегідь.</p>}
+      {dish.lead_days > 0 && !isCustomDish(dish) && <p className="notice">{leadLabel(settings, dish)}. Кухар готує її заздалегідь.</p>}
 
       {dish.ingredients.length > 0 && (
         <>
@@ -125,15 +131,19 @@ export default function DishPage() {
       )}
       {dish.storage_note && <p className="small muted">Зберігання: {dish.storage_note}</p>}
 
-      <div className="sticky-action">
-        {slotOk && open ? (
-          <button className="btn wide" onClick={() => cart.add(dish)}>
-            {qty > 0 ? `Ще одну · у кошику ${qty}` : `Додати в кошик · ${money(dish.price_cents)}`}
-          </button>
-        ) : (
-          <p className="muted small">Цю страву не готують на обране вікно, або замовлення вже закрите.</p>
-        )}
-      </div>
+      {isCustomDish(dish) ? (
+        <CustomOrderForm dish={dish} />
+      ) : (
+        <div className="sticky-action">
+          {slotOk && open ? (
+            <button className="btn wide" onClick={() => cart.add(dish)}>
+              {qty > 0 ? `Ще одну · у кошику ${qty}` : `Додати в кошик · ${money(dish.price_cents)}`}
+            </button>
+          ) : (
+            <p className="muted small">Цю страву не готують на обране вікно, або замовлення вже закрите.</p>
+          )}
+        </div>
+      )}
 
       <h3>Відгуки</h3>
       {reviews.length === 0 && <p className="muted">Ще немає відгуків.</p>}

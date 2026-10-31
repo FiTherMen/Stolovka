@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { callApi } from '../../lib/api'
 import { NEXT_STATUS, STATUS_LABELS, money, unitShort } from '../../lib/format'
 import { errorText, supabase } from '../../lib/supabase'
-import { SLOTS, addDays, dateLabel, todayIn } from '../../lib/time'
+import { ORDER_SLOTS, addDays, dateLabel, slotTitle, slotWindow, todayIn } from '../../lib/time'
 import { useAuth } from '../../state/auth'
 import { useNewOrders } from '../../state/newOrders'
 import { useSettings } from '../../state/settings'
@@ -31,7 +31,9 @@ export default function KitchenOrders() {
     if (!fresh.loaded || autoPicked.current) return
     autoPicked.current = true
     if (fresh.byDate[today]) return
-    const first = Object.keys(fresh.byDate).filter((d) => d >= today).sort()[0]
+    const first = Object.keys(fresh.byDate)
+      .filter((d) => d >= today)
+      .sort()[0]
     if (first) setDate(first)
   }, [fresh.loaded, fresh.byDate, today])
 
@@ -68,6 +70,8 @@ export default function KitchenOrders() {
 
   const active = orders.filter((o) => o.status !== 'cancelled')
   const dates = [-1, 0, 1, 2, 3, 4, 5, 6, 7].map((n) => addDays(today, n))
+  // Замовлення «під замовлення» бувають і далі ніж на тиждень: показуємо обрану дату окремим чипом.
+  if (!dates.includes(date)) dates.push(date)
   const laterNew = Object.entries(fresh.byDate)
     .filter(([d, n]) => d !== date && d >= today && n > 0)
     .sort(([a], [b]) => (a < b ? -1 : 1))
@@ -90,24 +94,29 @@ export default function KitchenOrders() {
         </button>
       )}
 
-      {SLOTS.map((slot) => {
+      {ORDER_SLOTS.map((slot) => {
         const list = orders.filter((o) => o.slot === slot)
         if (list.length === 0) return null
-        const cfg = settings.slots[slot]
         const summary = new Map<string, { qty: number; unit?: string }>()
         list
           .filter((o) => o.status !== 'cancelled')
           .forEach((o) =>
-            o.order_items.forEach((i) => summary.set(i.dish_name, { qty: (summary.get(i.dish_name)?.qty ?? 0) + i.qty, unit: i.unit })),
+            o.order_items.forEach((i) =>
+              summary.set(i.dish_name, {
+                qty: (summary.get(i.dish_name)?.qty ?? 0) + i.qty,
+                unit: i.unit,
+              }),
+            ),
           )
         return (
           <section key={slot}>
             <h2 className="section-title">
-              {cfg.label} · {cfg.window_start}–{cfg.window_end}
+              {slotTitle(settings, slot)}
+              {slot !== 'custom' && ` · ${slotWindow(settings, slot)}`}
             </h2>
             <div className="card prep">
               <b>Що готувати:</b>
-                  {[...summary.entries()].map(([name, { qty, unit }]) => (
+              {[...summary.entries()].map(([name, { qty, unit }]) => (
                 <div key={name} className="row">
                   <span>{name}</span>
                   <b>
@@ -124,6 +133,11 @@ export default function KitchenOrders() {
                   </b>
                   <span className={`status status-${o.status}`}>{STATUS_LABELS[o.status]}</span>
                 </div>
+                {o.slot === 'custom' && (
+                  <div className="small">
+                    <b>🕐 {slotWindow(settings, o.slot, o.desired_time)}</b>
+                  </div>
+                )}
                 <div className="small">
                   {o.customer_name}
                   {o.phone && (

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { STATUS_LABELS, money } from '../lib/format'
 import { errorText, supabase } from '../lib/supabase'
-import { dateLabel } from '../lib/time'
+import { dateLabel, slotTitle, slotWindow } from '../lib/time'
 import { useAuth } from '../state/auth'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
@@ -17,7 +17,9 @@ export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([])
   const [reviewed, setReviewed] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState<string | null>(params.get('placed') ? 'Дякуємо! Замовлення прийнято, кухар отримав сповіщення.' : null)
+  const [message, setMessage] = useState<string | null>(
+    params.get('placed') ? 'Дякуємо! Замовлення прийнято, кухар отримав сповіщення.' : null,
+  )
 
   const load = useCallback(async () => {
     if (!session) return
@@ -88,8 +90,8 @@ export default function Orders() {
             <span className={`status status-${o.status}`}>{STATUS_LABELS[o.status]}</span>
           </div>
           <div className="muted small">
-            {dateLabel(o.delivery_date, settings.timezone)}, {settings.slots[o.slot].label.toLowerCase()} {settings.slots[o.slot].window_start}–
-            {settings.slots[o.slot].window_end} · кухар {o.chefs?.display_name}
+            {dateLabel(o.delivery_date, settings.timezone)}, {slotTitle(settings, o.slot).toLowerCase()}{' '}
+            {slotWindow(settings, o.slot, o.desired_time)} · кухар {o.chefs?.display_name}
           </div>
           {o.order_items.map((i) => (
             <div key={i.id}>
@@ -109,9 +111,11 @@ export default function Orders() {
             <span className="small muted">{o.paid ? 'оплачено' : 'готівкою при отриманні'}</span>
           </div>
           <div className="actions">
-            <button className="btn small ghost" onClick={() => repeat(o)}>
-              Повторити
-            </button>
+            {o.slot !== 'custom' && (
+              <button className="btn small ghost" onClick={() => repeat(o)}>
+                Повторити
+              </button>
+            )}
             {o.status === 'new' && (
               <button className="btn small danger" onClick={() => cancel(o)}>
                 Скасувати

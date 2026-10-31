@@ -1,11 +1,22 @@
 import { confirmAction } from '../lib/confirm'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { errorText, supabase } from '../lib/supabase'
 import { money, stars } from '../lib/format'
 import { allergenLabel } from '../lib/allergens'
 import { Plate } from '../components/Brand'
-import { SLOTS, availableDates, cutoffLabel, dateLabel, isDishOpen, isSlotOpen, leadLabel } from '../lib/time'
+import {
+  CUSTOM_LABEL,
+  SLOTS,
+  availableDates,
+  customLeadLabel,
+  cutoffLabel,
+  dateLabel,
+  isCustomDish,
+  isDishOpen,
+  isSlotOpen,
+  leadLabel,
+} from '../lib/time'
 import { useCart } from '../state/cart'
 import { useSettings } from '../state/settings'
 import type { Dish, Settings, Slot } from '../types'
@@ -23,19 +34,21 @@ function firstOpen(settings: Settings): { date: string; slot: Slot } {
   return { date: availableDates(settings)[0], slot: 'lunch' }
 }
 
-export default function Menu() {
+/** Меню. На сторінці кухаря (chefId) показує лише його страви і шапку header. */
+export default function Menu({ chefId, header }: { chefId?: string; header?: ReactNode } = {}) {
   const { settings } = useSettings()
   const cart = useCart()
   const [dishes, setDishes] = useState<Dish[]>([])
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   const [left, setLeft] = useState<Record<string, number>>({})
-  const [chefFilter, setChefFilter] = useState<string | null>(null)
+  const [chefFilterState, setChefFilter] = useState<string | null>(null)
+  const chefFilter = chefId ?? chefFilterState
+  const [customView, setCustomView] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const dates = availableDates(settings)
-  const selection =
-    cart.date && cart.slot && dates.includes(cart.date) ? { date: cart.date, slot: cart.slot } : firstOpen(settings)
+  const selection = cart.date && cart.slot && dates.includes(cart.date) ? { date: cart.date, slot: cart.slot } : firstOpen(settings)
   const open = isSlotOpen(settings, selection.date, selection.slot)
 
   useEffect(() => {
@@ -48,7 +61,7 @@ export default function Menu() {
       const [d, r] = await Promise.all([
         supabase
           .from('dishes')
-          .select('*, chefs!inner(display_name, status)')
+          .select('*, chefs!inner(display_name, status, slug)')
           .eq('is_active', true)
           .eq('is_hidden', false)
           .eq('chefs.status', 'approved')
@@ -75,7 +88,10 @@ export default function Menu() {
     return [...map.entries()]
   }, [dishes])
 
-  const visible = dishes.filter((d) => d.slots.includes(selection.slot) && (!chefFilter || d.chef_id === chefFilter))
+  const mine = dishes.filter((d) => !chefFilter || d.chef_id === chefFilter)
+  const customDishes = mine.filter(isCustomDish)
+  const showCustom = customView && customDishes.length > 0
+  const visible = showCustom ? customDishes : mine.filter((d) => d.slots.includes(selection.slot))
   const byCategory = useMemo(() => {
     const groups = new Map<string, Dish[]>()
     visible.forEach((d) => {
@@ -86,6 +102,7 @@ export default function Menu() {
   }, [visible])
 
   const choose = (date: string, slot: Slot) => {
+    setCustomView(false)
     if (date === selection.date && slot === selection.slot) return
     if (cart.count > 0 && !confirmAction('У кошику страви на інший час. Очистити кошик і перейти?')) return
     if (cart.count > 0) cart.clear()
@@ -96,32 +113,49 @@ export default function Menu() {
 
   return (
     <div className="page">
-      <div className="chips scroll-x">
-        {dates.map((d) => (
-          <button key={d} className={`chip ${d === selection.date ? 'active' : ''}`} onClick={() => choose(d, selection.slot)}>
-            {dateLabel(d, settings.timezone)}
-          </button>
-        ))}
-      </div>
+      {header}
+      {!showCustom && (
+        <div className="chips scroll-x">
+          {dates.map((d) => (
+            <button key={d} className={`chip ${d === selection.date ? 'active' : ''}`} onClick={() => choose(d, selection.slot)}>
+              {dateLabel(d, settings.timezone)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="tabs">
         {SLOTS.filter((s) => settings.slots[s].enabled).map((s) => (
-          <button key={s} className={`tab ${s === selection.slot ? 'active' : ''}`} onClick={() => choose(selection.date, s)}>
+          <button
+            key={s}
+            className={`tab ${!showCustom && s === selection.slot ? 'active' : ''}`}
+            onClick={() => choose(selection.date, s)}
+          >
             <span>{settings.slots[s].label}</span>
             <small>
               {settings.slots[s].window_start}–{settings.slots[s].window_end}
             </small>
           </button>
         ))}
+        {customDishes.length > 0 && (
+          <button className={`tab ${showCustom ? 'active' : ''}`} onClick={() => setCustomView(true)}>
+            <span>{CUSTOM_LABEL}</span>
+            <small>торти й інше</small>
+          </button>
+        )}
       </div>
 
-      <p className={`notice ${open ? '' : 'warn'}`}>
-        {open
-          ? `${slotCfg.label} ${dateLabel(selection.date, settings.timezone).toLowerCase()}, видача ${slotCfg.window_start}–${slotCfg.window_end}. Замовити ${cutoffLabel(settings, selection.slot)}.`
-          : `Замовлення на ${slotCfg.label.toLowerCase()} ${dateLabel(selection.date, settings.timezone).toLowerCase()} вже закрите. Оберіть інший день або вікно.`}
-      </p>
+      {showCustom ? (
+        <p className="notice">Готується індивідуально на обрану вами дату. Відкрийте страву, оберіть дату, час і напишіть побажання.</p>
+      ) : (
+        <p className={`notice ${open ? '' : 'warn'}`}>
+          {open
+            ? `${slotCfg.label} ${dateLabel(selection.date, settings.timezone).toLowerCase()}, видача ${slotCfg.window_start}–${slotCfg.window_end}. Замовити ${cutoffLabel(settings, selection.slot)}.`
+            : `Замовлення на ${slotCfg.label.toLowerCase()} ${dateLabel(selection.date, settings.timezone).toLowerCase()} вже закрите. Оберіть інший день або вікно.`}
+        </p>
+      )}
 
-      {chefs.length > 1 && (
+      {!chefId && chefs.length > 1 && (
         <div className="chips scroll-x">
           <button className={`chip ${!chefFilter ? 'active' : ''}`} onClick={() => setChefFilter(null)}>
             Усі кухарі
@@ -142,9 +176,20 @@ export default function Menu() {
         <section key={category}>
           <h2 className="section-title">{category}</h2>
           <div className="dish-grid">
-            {list.map((d) => (
-              <DishCard key={d.id} dish={d} rating={ratings[d.id]} left={left[d.id]} canOrder={open && isDishOpen(settings, d, selection.date, selection.slot)} lead={leadLabel(settings, d)} />
-            ))}
+            {list.map((d) =>
+              showCustom ? (
+                <DishCard key={d.id} dish={d} rating={ratings[d.id]} canOrder lead={customLeadLabel(d)} custom />
+              ) : (
+                <DishCard
+                  key={d.id}
+                  dish={d}
+                  rating={ratings[d.id]}
+                  left={left[d.id]}
+                  canOrder={open && isDishOpen(settings, d, selection.date, selection.slot)}
+                  lead={leadLabel(settings, d)}
+                />
+              ),
+            )}
           </div>
         </section>
       ))}
@@ -152,7 +197,21 @@ export default function Menu() {
   )
 }
 
-function DishCard({ dish, rating, left, canOrder, lead }: { dish: Dish; rating?: Rating; left?: number; canOrder: boolean; lead: string }) {
+function DishCard({
+  dish,
+  rating,
+  left,
+  canOrder,
+  lead,
+  custom,
+}: {
+  dish: Dish
+  rating?: Rating
+  left?: number
+  canOrder: boolean
+  lead: string
+  custom?: boolean
+}) {
   const cart = useCart()
   const qty = cart.qtyOf(dish.id)
   const soldOut = left !== undefined && left <= 0
@@ -172,7 +231,9 @@ function DishCard({ dish, rating, left, canOrder, lead }: { dish: Dish; rating?:
         <Link to={`/dish/${dish.id}`} className="dish-name">
           {dish.name}
         </Link>
-        <div className="muted small">{dish.chefs?.display_name}</div>
+        <div className="muted small">
+          {dish.chefs?.slug ? <Link to={`/chef/${dish.chefs.slug}`}>{dish.chefs.display_name}</Link> : dish.chefs?.display_name}
+        </div>
         {meta.length > 0 && <div className="muted small">{meta.join(' · ')}</div>}
         {(dish.tags.includes('vegetarian') || dish.allergens.length > 0) && (
           <div className="mini-chips">
@@ -184,7 +245,10 @@ function DishCard({ dish, rating, left, canOrder, lead }: { dish: Dish; rating?:
         )}
         {rating && (
           <div className="rating small">
-            {stars(rating.avg_rating)} <span className="muted">{rating.avg_rating} ({rating.reviews_count})</span>
+            {stars(rating.avg_rating)}{' '}
+            <span className="muted">
+              {rating.avg_rating} ({rating.reviews_count})
+            </span>
           </div>
         )}
         {left !== undefined && left > 0 && left <= 5 && (
@@ -192,13 +256,19 @@ function DishCard({ dish, rating, left, canOrder, lead }: { dish: Dish; rating?:
             Ще {left} {dish.unit === 'piece' ? 'шт' : 'порц.'} на цей день
           </div>
         )}
-        {lead && <div className={`small ${canOrder ? 'muted' : 'warn-text'}`}>{canOrder ? lead : `${lead}, на цю дату вже не встигнути`}</div>}
+        {lead && (
+          <div className={`small ${canOrder ? 'muted' : 'warn-text'}`}>{canOrder ? lead : `${lead}, на цю дату вже не встигнути`}</div>
+        )}
         <div className="dish-footer">
           <span className="price-tag">
             {money(dish.price_cents)}
             {dish.unit === 'piece' && <small> / шт</small>}
           </span>
-          {qty > 0 ? (
+          {custom ? (
+            <Link className="btn small" to={`/dish/${dish.id}`}>
+              Замовити
+            </Link>
+          ) : qty > 0 ? (
             <div className="stepper">
               <button onClick={() => cart.setQty(dish.id, qty - 1)} aria-label="Менше">
                 −

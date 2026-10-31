@@ -1,4 +1,4 @@
-import type { Dish, Settings, Slot } from '../types'
+import type { Dish, OrderSlot, Settings, Slot } from '../types'
 
 export const SLOTS: Slot[] = ['breakfast', 'lunch', 'dinner']
 
@@ -90,3 +90,38 @@ export const DEFAULT_SETTINGS: Settings = {
     dinner: { label: 'Вечеря', window_start: '20:00', window_end: '20:30', cutoff_time: '16:00', cutoff_days_before: 0, enabled: true },
   },
 }
+
+/** Страва «під замовлення»: без сніданку/обіду/вечері, клієнт обирає дату сам. */
+export const isCustomDish = (d: Pick<Dish, 'slots'>) => d.slots.includes('custom')
+export const CUSTOM_LABEL = 'Під замовлення'
+/** До скількох днів наперед можна замовити «під замовлення» (те саме обмеження в базі). */
+export const CUSTOM_MAX_DAYS = 60
+
+/** Назва вікна для замовлення, включно з «Під замовлення». */
+export function slotTitle(settings: Settings, slot: OrderSlot): string {
+  return slot === 'custom' ? CUSTOM_LABEL : settings.slots[slot].label
+}
+
+/** Час видачі: «13:30–14:00», бажаний час клієнта або «час узгодить кухар». */
+export function slotWindow(settings: Settings, slot: OrderSlot, desired?: string | null): string {
+  if (slot === 'custom') return desired ? `на ${desired}` : 'час узгодить кухар'
+  return `${settings.slots[slot].window_start}–${settings.slots[slot].window_end}`
+}
+
+/** Найраніша дата для страви «під замовлення». */
+export function customMinDate(settings: Settings, dish: Pick<Dish, 'lead_days'>): string {
+  const today = todayIn(settings.timezone)
+  const lead = Math.max(1, dish.lead_days || 1)
+  // Після advance_cutoff_time (21:00) сьогоднішній день уже не рахується.
+  const late = nowIn(settings.timezone).slice(11) >= advanceTime(settings)
+  return addDays(today, lead + (late ? 1 : 0))
+}
+
+/** «Під замовлення, від 2 днів». */
+export function customLeadLabel(dish: Pick<Dish, 'lead_days'>): string {
+  const n = Math.max(1, dish.lead_days || 1)
+  return `${CUSTOM_LABEL}, мінімум за ${n} ${n === 1 ? 'день' : n < 5 ? 'дні' : 'днів'}`
+}
+
+/** Усі вікна замовлень у порядку показу: сніданок, обід, вечеря, під замовлення. */
+export const ORDER_SLOTS: OrderSlot[] = [...SLOTS, 'custom']
