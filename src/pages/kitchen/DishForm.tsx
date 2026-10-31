@@ -57,6 +57,16 @@ const EMPTY: FormState = {
   is_active: true,
 }
 
+const MAX_PHOTOS = 5
+
+/** Переставляє елемент з позиції from на позицію to. */
+const moveTo = <T,>(list: T[], from: number, to: number) => {
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
+
 const str = (v: number | null | undefined) => (v == null ? '' : String(v))
 const num = (v: string) => (v.trim() === '' ? null : Number(v.replace(',', '.')))
 const CATEGORIES = ['Сніданки', 'Перші страви', 'Другі страви', 'Комплекси', 'Салати', 'Закуски', 'Випічка', 'Десерти', 'Напої']
@@ -116,14 +126,14 @@ export default function DishForm() {
     setError(null)
     try {
       const urls: string[] = []
-      for (const file of [...files].slice(0, 3 - f.photo_urls.length)) {
+      for (const file of [...files].slice(0, MAX_PHOTOS - f.photo_urls.length)) {
         const blob = await resizeImage(file)
         const path = `${chef.id}/${crypto.randomUUID()}.jpg`
         const { error } = await supabase.storage.from('dish-photos').upload(path, blob, { contentType: 'image/jpeg' })
         if (error) throw error
         urls.push(supabase.storage.from('dish-photos').getPublicUrl(path).data.publicUrl)
       }
-      setF((s) => ({ ...s, photo_urls: [...s.photo_urls, ...urls].slice(0, 3) }))
+      setF((s) => ({ ...s, photo_urls: [...s.photo_urls, ...urls].slice(0, MAX_PHOTOS) }))
     } catch (e) {
       setError(errorText(e))
     }
@@ -181,22 +191,34 @@ export default function DishForm() {
       <h2>{id ? 'Редагувати страву' : 'Нова страва'}</h2>
 
       <div className="photos">
-        {f.photo_urls.map((u) => (
+        {f.photo_urls.map((u, i) => (
           <div key={u} className="photo">
             <img src={u} alt="" />
-            <button type="button" onClick={() => set('photo_urls', f.photo_urls.filter((x) => x !== u))} aria-label="Прибрати фото">
+            <button type="button" className="photo-remove" onClick={() => set('photo_urls', f.photo_urls.filter((x) => x !== u))} aria-label="Прибрати фото">
               ×
             </button>
+            {i === 0 ? (
+              <span className="photo-cover">обкладинка</span>
+            ) : (
+              <div className="photo-tools">
+                <button type="button" onClick={() => set('photo_urls', moveTo(f.photo_urls, i, i - 1))} aria-label="Посунути ліворуч" title="Посунути ліворуч">
+                  ‹
+                </button>
+                <button type="button" onClick={() => set('photo_urls', moveTo(f.photo_urls, i, 0))} title="Зробити обкладинкою">
+                  ★
+                </button>
+              </div>
+            )}
           </div>
         ))}
-        {f.photo_urls.length < 3 && (
+        {f.photo_urls.length < MAX_PHOTOS && (
           <label className="photo add">
             {uploading ? '…' : '+ фото'}
             <input type="file" accept="image/*" multiple hidden onChange={(e) => upload(e.target.files)} />
           </label>
         )}
       </div>
-      <p className="small muted">До 3 фото. Перше фото показується в меню.</p>
+      <p className="small muted">До {MAX_PHOTOS} фото. Перше фото (обкладинка) показується в меню, решта в галереї страви. ★ робить фото обкладинкою, ‹ посуває ліворуч.</p>
 
       <label>
         Назва*

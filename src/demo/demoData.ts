@@ -24,6 +24,14 @@ export const DEMO_USERS = {
 
 const PENDING_CHEF = 'demo-chef-2'
 
+
+/** Ілюстрації-заглушки для демо-галереї (SVG, без зовнішніх файлів). */
+function demoPhoto(bg: string, cream: string, layers: number): string {
+  const rows = Array.from({ length: layers }, (_, k) => `<rect x="80" y="${280 - k * 22}" width="240" height="22" rx="4" fill="${k % 2 ? cream : bg}"/>`).join('')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#f6e3bf"/><ellipse cx="200" cy="310" rx="175" ry="55" fill="#fffaf0"/>${rows}<rect x="76" y="${280 - layers * 22}" width="248" height="24" rx="10" fill="${cream}"/></svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
 /** Тестові дані демо: кухарка з 10 стравами, кухар на схваленні, замовлення і відгуки відносно сьогоднішньої дати. */
 export function buildDemoDb(): DemoDb {
   const today = todayIn(DEFAULT_SETTINGS.timezone)
@@ -44,6 +52,7 @@ export function buildDemoDb(): DemoDb {
       ...dishes[9],
       id: 'dish-cake',
       name: 'Торт «Медовик»',
+      photo_urls: [demoPhoto('#c98a3e', '#fbeed3', 6), demoPhoto('#a8642a', '#fff3dc', 4), demoPhoto('#e0a95a', '#f8e6c4', 8)],
       category: 'Десерти',
       description: 'Цілий медовий торт зі сметанним кремом, 8 шматків. Печу за день до видачі.',
       weight_g: 1200,

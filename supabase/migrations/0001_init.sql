@@ -134,7 +134,7 @@ create table public.dishes (
   name text not null,
   description text,
   category text,
-  photo_urls text[] not null default '{}' check (cardinality(photo_urls) <= 3),
+  photo_urls text[] not null default '{}' check (cardinality(photo_urls) <= 5),
   price_cents int not null check (price_cents >= 0),
   weight_g int check (weight_g > 0),
   volume_ml int check (volume_ml > 0),

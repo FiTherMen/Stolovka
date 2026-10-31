@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { allergenLabel, TAGS } from '../lib/allergens'
 import { money, stars } from '../lib/format'
-import { Plate } from '../components/Brand'
+import Gallery from '../components/Gallery'
 import { supabase } from '../lib/supabase'
 import { isDishOpen, leadLabel } from '../lib/time'
 import { useCart } from '../state/cart'
@@ -15,7 +15,6 @@ export default function DishPage() {
   const cart = useCart()
   const [dish, setDish] = useState<Dish | null>(null)
   const [reviews, setReviews] = useState<Review[]>([])
-  const [photo, setPhoto] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,18 +40,7 @@ export default function DishPage() {
 
   return (
     <div className="page dish-page">
-      <div className="plate-stage">
-        <Plate src={dish.photo_urls[photo]} alt={dish.name} />
-      </div>
-      {dish.photo_urls.length > 1 && (
-        <div className="thumbs">
-          {dish.photo_urls.map((u, i) => (
-            <button key={u} className={i === photo ? 'active' : ''} onClick={() => setPhoto(i)} aria-label={`Фото ${i + 1}`}>
-              <img src={u} alt="" />
-            </button>
-          ))}
-        </div>
-      )}
+      <Gallery photos={dish.photo_urls} alt={dish.name} />
 
       {dish.category && <div className="eyebrow">{dish.category}</div>}
       <h1>{dish.name}</h1>
