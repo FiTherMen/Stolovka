@@ -1,0 +1,12 @@
+# СЕКРЕТИ для серверних функцій (папка functions/). Ніколи не комітьте цей файл з реальними значеннями.
+# Локально: скопіюйте у .dev.vars. На Cloudflare Pages: Settings → Variables and Secrets (тип Secret).
+SUPABASE_URL=https://xxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+TELEGRAM_BOT_TOKEN=
+# Будь-який довгий випадковий рядок (букви, цифри, _ та -), захищає вебхук бота.
+TELEGRAM_WEBHOOK_SECRET=
+# Числові Telegram ID власників через кому: вони стають адміністраторами і отримують копії замовлень.
+ADMIN_TELEGRAM_IDS=
+# Адреса сайту, напр. https://stolovka.pages.dev (для кнопки «Відкрити меню» в боті)
+PUBLIC_APP_URL=

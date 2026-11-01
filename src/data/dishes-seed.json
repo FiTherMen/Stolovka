@@ -1,0 +1,375 @@
+{
+  "meta": {
+    "version": 1,
+    "currency": "EUR",
+    "note": "Тестові дані. КБЖУ і ціни орієнтовні, кухар має уточнити.",
+    "allergen_labels": {
+      "gluten": "глютен",
+      "eggs": "яйця",
+      "milk": "молоко/лактоза",
+      "mustard": "гірчиця",
+      "sulphites": "сульфіти",
+      "celery": "селера"
+    }
+  },
+  "dishes": [
+    {
+      "id": 1,
+      "slug": "borshch",
+      "name": "Борщ український з пампушкою",
+      "category": "Перші страви",
+      "description": "Наваристий борщ на яловичому бульйоні з буряком і квасолею, подається зі сметаною та часниковою пампушкою.",
+      "weight_g": 420,
+      "volume_ml": null,
+      "portion": "борщ 350 г, сметана 20 г, пампушка 50 г",
+      "nutrition_per_portion": {
+        "kcal": 385,
+        "protein_g": 14,
+        "fat_g": 17,
+        "carbs_g": 45
+      },
+      "ingredients": [
+        "яловичина",
+        "буряк",
+        "капуста",
+        "картопля",
+        "морква",
+        "цибуля",
+        "квасоля",
+        "томатна паста",
+        "часник",
+        "сметана",
+        "борошно пшеничне",
+        "яйце",
+        "олія соняшникова",
+        "кріп"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.5,
+      "vegetarian": false,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Borscht&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 2,
+      "slug": "varenyky-potato",
+      "name": "Вареники з картоплею та смаженою цибулею",
+      "category": "Другі страви",
+      "description": "Домашні вареники з картопляною начинкою, политі засмаженою цибулею, зі сметаною.",
+      "weight_g": 280,
+      "volume_ml": null,
+      "portion": "вареники 250 г (~12 шт), сметана 30 г",
+      "nutrition_per_portion": {
+        "kcal": 554,
+        "protein_g": 13,
+        "fat_g": 18,
+        "carbs_g": 85
+      },
+      "ingredients": [
+        "борошно пшеничне",
+        "картопля",
+        "цибуля",
+        "яйце",
+        "олія соняшникова",
+        "вершкове масло",
+        "сметана",
+        "сіль"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.0,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Varenyky%20potato&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 3,
+      "slug": "varenyky-cherry",
+      "name": "Вареники з вишнею",
+      "category": "Десерти",
+      "description": "Вареники з кислуватою вишнею, присипані цукром, зі сметаною.",
+      "weight_g": 280,
+      "volume_ml": null,
+      "portion": "вареники 250 г (~12 шт), сметана 30 г",
+      "nutrition_per_portion": {
+        "kcal": 505,
+        "protein_g": 11,
+        "fat_g": 9,
+        "carbs_g": 95
+      },
+      "ingredients": [
+        "борошно пшеничне",
+        "вишня",
+        "цукор",
+        "яйце",
+        "сметана"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.0,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Varenyky%20cherry&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 4,
+      "slug": "holubtsi",
+      "name": "Голубці з м'ясом і рисом",
+      "category": "Другі страви",
+      "description": "Капустяні листки з начинкою зі свинячо-яловичого фаршу та рису, тушковані в томатно-сметанному соусі.",
+      "weight_g": 330,
+      "volume_ml": null,
+      "portion": "голубці 300 г (2 шт), сметана 30 г",
+      "nutrition_per_portion": {
+        "kcal": 424,
+        "protein_g": 22,
+        "fat_g": 24,
+        "carbs_g": 30
+      },
+      "ingredients": [
+        "капуста білокачанна",
+        "фарш свинячо-яловичий",
+        "рис",
+        "цибуля",
+        "морква",
+        "томатна паста",
+        "сметана",
+        "лавровий лист",
+        "спеції"
+      ],
+      "allergens": [
+        "milk"
+      ],
+      "price_eur": 8.5,
+      "vegetarian": false,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Holubtsi&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 5,
+      "slug": "deruny",
+      "name": "Деруни зі сметаною",
+      "category": "Другі страви",
+      "description": "Хрусткі картопляні оладки, засмажені на олії, зі сметаною.",
+      "weight_g": 290,
+      "volume_ml": null,
+      "portion": "деруни 250 г (5 шт), сметана 40 г",
+      "nutrition_per_portion": {
+        "kcal": 470,
+        "protein_g": 9,
+        "fat_g": 26,
+        "carbs_g": 50
+      },
+      "ingredients": [
+        "картопля",
+        "цибуля",
+        "яйце",
+        "борошно пшеничне",
+        "олія соняшникова",
+        "сметана",
+        "сіль"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.5,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Deruny&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 6,
+      "slug": "chicken-kyiv",
+      "name": "Котлета по-київськи з картопляним пюре",
+      "category": "Другі страви",
+      "description": "Куряче філе з начинкою з вершкового масла й зелені в хрусткій паніровці, з картопляним пюре.",
+      "weight_g": 380,
+      "volume_ml": null,
+      "portion": "котлета 180 г, пюре 200 г",
+      "nutrition_per_portion": {
+        "kcal": 784,
+        "protein_g": 38,
+        "fat_g": 48,
+        "carbs_g": 50
+      },
+      "ingredients": [
+        "куряче філе",
+        "вершкове масло",
+        "кріп",
+        "яйце",
+        "панірувальні сухарі",
+        "борошно пшеничне",
+        "картопля",
+        "молоко",
+        "олія соняшникова"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 10.5,
+      "vegetarian": false,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Chicken%20Kiev&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 7,
+      "slug": "syrnyky",
+      "name": "Сирники зі сметаною і варенням",
+      "category": "Сніданки",
+      "description": "Ніжні сирники з домашнього кисломолочного сиру, подаються зі сметаною та ягідним варенням.",
+      "weight_g": 260,
+      "volume_ml": null,
+      "portion": "сирники 200 г (4 шт), сметана 30 г, варення 30 г",
+      "nutrition_per_portion": {
+        "kcal": 538,
+        "protein_g": 30,
+        "fat_g": 22,
+        "carbs_g": 55
+      },
+      "ingredients": [
+        "кисломолочний сир 9%",
+        "яйце",
+        "борошно пшеничне",
+        "цукор",
+        "ванільний цукор",
+        "олія соняшникова",
+        "сметана",
+        "варення"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.5,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Syrniki&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 8,
+      "slug": "nalysnyky",
+      "name": "Налисники з сиром",
+      "category": "Сніданки",
+      "description": "Тонкі млинці, загорнуті з солодкою сирною начинкою та запечені з вершковим маслом.",
+      "weight_g": 280,
+      "volume_ml": null,
+      "portion": "налисники 250 г (3 шт), сметана 30 г",
+      "nutrition_per_portion": {
+        "kcal": 484,
+        "protein_g": 24,
+        "fat_g": 20,
+        "carbs_g": 52
+      },
+      "ingredients": [
+        "борошно пшеничне",
+        "молоко",
+        "яйце",
+        "кисломолочний сир",
+        "цукор",
+        "родзинки",
+        "вершкове масло",
+        "сметана"
+      ],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "milk"
+      ],
+      "price_eur": 6.5,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Nalesniki&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 9,
+      "slug": "kholodets",
+      "name": "Холодець зі свинини та яловичини",
+      "category": "Закуски",
+      "description": "Класичний холодець на кістковому бульйоні з часником, подається з хроном і гірчицею.",
+      "weight_g": 280,
+      "volume_ml": null,
+      "portion": "холодець 250 г, хрін 15 г, гірчиця 15 г",
+      "nutrition_per_portion": {
+        "kcal": 267,
+        "protein_g": 30,
+        "fat_g": 15,
+        "carbs_g": 3
+      },
+      "ingredients": [
+        "свинячі ніжки",
+        "яловичина",
+        "морква",
+        "цибуля",
+        "часник",
+        "лавровий лист",
+        "перець горошком",
+        "хрін",
+        "гірчиця"
+      ],
+      "allergens": [
+        "mustard",
+        "sulphites"
+      ],
+      "price_eur": 7.0,
+      "vegetarian": false,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Kholodets&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    },
+    {
+      "id": 10,
+      "slug": "uzvar",
+      "name": "Узвар",
+      "category": "Напої",
+      "description": "Традиційний напій із сухофруктів (яблука, груші, чорнослив) з медом.",
+      "weight_g": null,
+      "volume_ml": 500,
+      "portion": "500 мл",
+      "nutrition_per_portion": {
+        "kcal": 122,
+        "protein_g": 0.5,
+        "fat_g": 0,
+        "carbs_g": 30
+      },
+      "ingredients": [
+        "сушені яблука",
+        "сушені груші",
+        "чорнослив",
+        "родзинки",
+        "мед",
+        "вода"
+      ],
+      "allergens": [
+        "sulphites"
+      ],
+      "price_eur": 2.5,
+      "vegetarian": true,
+      "photo_url": null,
+      "photo_search_url": "https://commons.wikimedia.org/w/index.php?search=Uzvar&title=Special:MediaSearch&type=image",
+      "is_test_data": true
+    }
+  ]
+}
