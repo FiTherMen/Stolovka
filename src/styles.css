@@ -1252,3 +1252,38 @@ button.link {
   white-space: nowrap;
   padding: 7px 12px;
 }
+
+/* Вкладки кабінету й адмінки: кожна — окрема кнопка-пігулка, активна залита карамеллю. */
+.tabs.small {
+  background: none;
+  padding: 0 0 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+  border-radius: 0;
+  gap: 8px;
+}
+.tabs.small .tab {
+  flex: 0 1 auto;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 0 var(--border);
+  color: var(--text);
+  font-weight: 700;
+  padding: 8px 14px;
+  min-height: 40px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tabs.small .tab:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.tabs.small .tab:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.tabs.small .tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 0 var(--accent-hover, #6e3a0e);
+}
