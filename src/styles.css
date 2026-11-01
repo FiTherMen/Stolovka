@@ -1239,3 +1239,16 @@ button.link {
     font-size: 0.92rem;
   }
 }
+
+/* Вкладки кабінету й адмінки (5–6 штук): переносяться в два рядки, ніколи не налазять одна на одну. */
+.tabs.small {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  border-radius: 18px;
+}
+.tabs.small .tab {
+  flex: 1 0 auto;
+  min-width: auto;
+  white-space: nowrap;
+  padding: 7px 12px;
+}
